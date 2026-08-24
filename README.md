@@ -1,15 +1,19 @@
 # Olve.SlimeRepublics
 
-A .NET 10 minimal API service template. Install with `dotnet new` and scaffold a full solution with auth, telemetry, Helm chart, and client generation.
+A real-time MMO server. Slimes, republics, and a WebSocket carrying an authoritative world state
+to every connected client at 20 Hz.
 
-## Usage
+Scaffolded from [Olve.Template.Api](https://github.com/OliverVea/Olve.Template.Api) (`dotnet new
+olve-api`), so it arrives with OIDC auth, OpenTelemetry, a Helm chart, GitOps deployment via
+Olve.Pipelines, and C#/TypeScript client generation. The part that is specific to this project is
+the realtime layer — **[docs/REALTIME.md](docs/REALTIME.md) is the design document**, and worth
+reading before changing anything under `src/Olve.SlimeRepublics/Realtime/`.
+
+## Quick start
 
 ```bash
-# Install the template
-dotnet new install .
-
-# Create a new project
-dotnet new olve-api -n "MyCompany.MyService"
+dotnet run --project src/Olve.SlimeRepublics   # API on http://localhost:5000
+cd frontend && npm ci && npm run dev           # SPA on http://localhost:5173, /api proxied
 ```
 
 ## Project Structure
@@ -17,7 +21,8 @@ dotnet new olve-api -n "MyCompany.MyService"
 ```
 src/Olve.SlimeRepublics/                          # API application (minimal API)
 ├── Configuration/                              # Auth, telemetry, JSON, host config
-├── Messages/                                   # Message CRUD example feature
+├── Realtime/                                   # WebSocket layer — see docs/REALTIME.md
+├── Messages/                                   # Message CRUD example feature (from the template)
 ├── Stores/                                     # EntityStore snapshot persistence (promotion-shaped)
 ├── Health/                                     # Health check endpoints
 └── appsettings.json                            # Default configuration
@@ -26,6 +31,8 @@ test/Olve.SlimeRepublics.IntegrationTests/        # Integration tests (TUnit + T
 clients/Olve.SlimeRepublics.Client/               # Generated C# client (Refitter CLI + Refit)
 clients/olve-slimerepublics-client-ts/            # Generated TypeScript client (Kiota)
 frontend/                                       # Vanilla Web Components + TS frontend (see frontend/README.md)
+frontend/src/realtime/                          # Hand-written WebSocket client (OpenAPI cannot generate it)
+docs/REALTIME.md                                # Realtime design: protocol, auth, concurrency, scaling
 tools/version.cs                                # CalVer versioning script
 helm/                                           # Helm chart for Kubernetes (ClusterIP Service + SLO)
 .pipelines/                                     # Olve.Pipelines CD config (build, test, deploy beta→prod)
@@ -45,10 +52,16 @@ Directory.Packages.props                        # Central package version manage
 | POST | `/api/messages` | Yes (JWT) | Create a message (`{ "text": "…" }`) |
 | PUT | `/api/messages/{id}` | Yes (JWT) | Update a message (`{ "text": "…" }`) |
 | DELETE | `/api/messages/{id}` | Yes (JWT) | Delete a message |
+| POST | `/api/realtime/ticket` | Yes (JWT) | Mint a single-use, 30s ticket for the WebSocket handshake |
+| GET | `/ws?ticket=<t>` | Ticket | **WebSocket upgrade.** Binary protocol — see [docs/REALTIME.md](docs/REALTIME.md) |
 | GET | `/openapi/v1.json` | No | OpenAPI spec |
 
 The JSON API lives under `/api/` so the SPA can own the site root; `/health` stays at the root
 for Kubernetes probes. Unmatched non-API GETs fall back to `index.html` for SPA client routing.
+
+`/ws` is excluded from the OpenAPI document — the spec has no way to describe an upgraded
+connection, so documenting it would only produce a misleading `GET` and a dead method on every
+generated client. Its wire format is specified in [docs/REALTIME.md](docs/REALTIME.md) §2 instead.
 
 The `Messages` feature is the template's worked example — it exercises `Id<T>`, an
 `EntityStore<Message>`, `Page<T>` pagination, the `IHandler` + `.WithValidation(...)` pattern, and
@@ -180,6 +193,24 @@ Sources in priority order (highest wins):
 | `OpenTelemetry:Endpoint` | `https://otel.ovea.pro` | OTLP endpoint (null = disabled) |
 | `Storage:Mode` | `Ephemeral` | `Ephemeral` (in-memory) or `Persistent` (snapshot to disk) |
 | `Storage:Directory` | `data` | Directory for `Persistent` snapshots |
+| `Realtime:TickHz` | `20` | Simulation and broadcast rate |
+| `Realtime:MaxConnections` | `256` | Hard connection ceiling |
+| `Realtime:TicketTtlSeconds` | `30` | Handshake ticket lifetime |
+
+The full `Realtime:*` table is in [docs/REALTIME.md](docs/REALTIME.md) §10.
+
+### Realtime
+
+Clients connect to `/ws` and exchange fixed-layout binary frames — a 40-slime world snapshot is
+487 bytes against roughly 2 KB of JSON, which is what makes 20 Hz affordable. HTTP keeps sole
+custody of the JWT: `POST /api/realtime/ticket` mints a single-use ticket that the socket carries
+in its place, because the browser `WebSocket` constructor cannot set an `Authorization` header.
+Token refresh stays client-initiated and HTTP-based, and a `ReAuth` control frame re-stamps a live
+connection so a refresh never costs a reconnect.
+
+**The world is in-process singleton state, so `replicaCount` must stay 1** and the Deployment uses
+`strategy: Recreate` — two pods behind one Service would silently fork the world. Scaling out means
+sharding by zone, not adding replicas. See [docs/REALTIME.md](docs/REALTIME.md) §8.
 
 ### Persistence
 
