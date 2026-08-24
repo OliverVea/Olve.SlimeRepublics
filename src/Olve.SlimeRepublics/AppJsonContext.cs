@@ -1,0 +1,30 @@
+using System.Text.Json.Serialization;
+using Olve.Results;
+using Olve.SlimeRepublics.Configuration;
+using Olve.SlimeRepublics.Messages;
+using Olve.SlimeRepublics.Realtime;
+using Olve.Utilities.Ids;
+using Olve.Utilities.Paginations;
+
+namespace Olve.SlimeRepublics;
+
+// Source-generated JSON for AOT. Id<Message> is registered explicitly so its closed generic is
+// statically reachable here (the Id<T> converter is reflection-based — see docs/DESIGN.md §1.4a).
+[JsonSerializable(typeof(ResultProblem[]))]
+[JsonSerializable(typeof(Message))]
+[JsonSerializable(typeof(IReadOnlyList<Message>))]
+[JsonSerializable(typeof(Page<Message>))]
+[JsonSerializable(typeof(MessageRequest))]
+[JsonSerializable(typeof(Id<Message>))]
+// The Result<T> wrappers are the endpoint delegates' declared return types, which OpenAPI
+// introspects at build time even though the result filter unwraps them at runtime.
+[JsonSerializable(typeof(Result))]
+[JsonSerializable(typeof(Result<Message>))]
+[JsonSerializable(typeof(Result<Page<Message>>))]
+// The realtime handshake ticket — the one JSON payload in the realtime slice. Everything after
+// the upgrade is binary and never touches this context (see Realtime/RealtimeProtocol.cs).
+[JsonSerializable(typeof(RealtimeTicketResponse))]
+[JsonSerializable(typeof(Result<RealtimeTicketResponse>))]
+// Public OIDC config served to the SPA at GET /api/auth-config.
+[JsonSerializable(typeof(FrontendAuthConfig))]
+internal partial class AppJsonContext : JsonSerializerContext;
