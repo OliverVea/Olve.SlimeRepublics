@@ -69,9 +69,15 @@ The layers should get progressively more demanding in what to pay attention to. 
 
 Nobody is required to climb. A player who never leaves layer 1 should have a complete game — and so
 should a *faction* where nobody has. Five slimes with no commander and no leadership is a functioning
-faction playing a real game, just an unamplified one. At the same time **at least one seat exists at
-each layer regardless of population**, so a faction of five can put someone in the commander's chair
-on day one rather than waiting to unlock it. Seats scale up from there; they never start closed.
+faction playing a real game, just an unamplified one. Seats then open as the faction can afford them, because
+**a seat costs a slime**: the player in the chair is a player not on the ground, and the seat has to
+amplify more than that body would have contributed. A commander over a handful of slimes clears that
+bar early. A full-time layer 3 over four slimes does not — it is a fifth of the faction spent on
+directing twelve people's war.
+
+So layer 2 opens almost immediately and layer 3 waits until there is something to lead. Exactly how
+it waits — a population threshold, or one seat holding both jobs until the faction is big enough to
+split them — is not settled.
 
 Broadly **teen-and-up (ESRB T)**: cartoon violence, no gore, no realistic weapons — but with player-to-player communication and player-run power structures, which is the actual reason for the rating and a real design obligation (see Game Systems, `_TBD_`).
 
