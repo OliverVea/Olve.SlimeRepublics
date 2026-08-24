@@ -1,7 +1,7 @@
-# Must stay 1. The realtime world is in-process singleton state, so a second replica would run a
-# second, divergent world and the Service would round-robin players between them with no way to
-# notice. Scaling out means sharding by zone with a routing layer, not raising this number —
-# see docs/REALTIME.md §8.
+# Must stay 1. One server owns one continent, held as in-process singleton state, so a second
+# replica would run a second, divergent copy and the Service would round-robin players between them
+# with no way to notice. Growing the world means adding continents, each with its own server, not
+# raising this number.
 replicaCount: 1
 
 image:

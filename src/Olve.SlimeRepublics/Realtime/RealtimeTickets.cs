@@ -34,7 +34,7 @@ public sealed record RealtimeTicketResponse(string Ticket, int ExpiresInSeconds,
 /// </para>
 /// <para>
 /// In-memory by design: tickets live seconds, and the connection they authorise is pinned to this
-/// process anyway. A multi-node deployment needs a shared store — see <c>docs/REALTIME.md</c> §8.
+/// process anyway. A multi-node deployment would need a shared store.
 /// </para>
 /// </summary>
 public sealed class RealtimeTicketStore(TimeProvider timeProvider, IOptions<RealtimeOptions> options)

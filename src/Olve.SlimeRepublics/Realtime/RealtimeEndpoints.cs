@@ -70,7 +70,7 @@ public static class RealtimeEndpoints
             .AllowAnonymous()
             // OpenAPI has no vocabulary for an upgraded connection, so documenting it would only
             // produce a misleading GET in api.json and a dead method on every generated client.
-            // The wire format lives in docs/REALTIME.md instead.
+            // The wire format is defined by RealtimeProtocol.cs.
             .ExcludeFromDescription();
     }
 

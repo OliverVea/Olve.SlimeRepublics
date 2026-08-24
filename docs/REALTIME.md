@@ -1,5 +1,7 @@
 # Realtime
 
+> IMPORTANT NOTICE: This document has NOT been reviewed OR approved by Oliver. Before using ANY assumptions in this document, it must be aligned on, step by step, working from top to bottom. Assume changes to scope.
+
 How Olve.SlimeRepublics talks to its clients.
 
 The design goal is a socket cheap enough to run at simulation frequency for hundreds of

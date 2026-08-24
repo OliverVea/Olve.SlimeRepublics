@@ -51,7 +51,7 @@
 
   <!-- server -->
   <rect class="outer" x="40" y="188" width="820" height="300" rx="8"/>
-  <text class="dim" x="58" y="211" font-size="13" font-weight="600">Server — one process, one pod</text>
+  <text class="dim" x="58" y="211" font-size="13" font-weight="600">Server — one process, one pod, one continent</text>
   <rect class="strip" x="62" y="222" width="776" height="30" rx="5"/>
   <text class="dim" x="78" y="242" font-size="12">Kestrel · single listener</text>
 
@@ -63,7 +63,7 @@
   <rect class="inner" x="462" y="266" width="376" height="72" rx="6"/>
   <text class="t"   x="478" y="288" font-size="13" font-weight="600">Realtime surface</text>
   <text class="dim" x="478" y="307" font-size="12">connection hub · per-socket send pump</text>
-  <text class="dim" x="478" y="324" font-size="12">20 Hz tick loop</text>
+  <text class="dim" x="478" y="324" font-size="12">fixed-rate tick loop</text>
 
   <rect class="hot" x="62" y="368" width="376" height="98" rx="6"/>
   <text class="t"   x="78" y="392" font-size="13" font-weight="600">SlimeWorld — hot state</text>

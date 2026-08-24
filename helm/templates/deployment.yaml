@@ -7,8 +7,8 @@ metadata:
 spec:
   replicas: {{ .Values.replicaCount }}
   strategy:
-    # Recreate, not RollingUpdate. The world lives in this pod's memory (see docs/REALTIME.md §8),
-    # and a rolling update briefly runs two pods behind one Service — which would split connected
+    # Recreate, not RollingUpdate. The world lives in this pod's memory, and a rolling
+    # update briefly runs two pods behind one Service — which would split connected
     # players across two divergent simulations. Recreate makes the handover a clean disconnect that
     # clients reconnect through, instead of a silent fork.
     type: Recreate

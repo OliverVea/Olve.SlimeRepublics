@@ -216,8 +216,7 @@ implementation is Unity, which does not apply here.
 loop as a `BackgroundService` and raw binary WebSockets rather than SignalR or JSON. Input commands
 land in a queue that the tick drains; world state is never mutated from a socket handler. The world
 is in-process singleton state, which means **exactly one replica** — scaling out means sharding by
-zone, never adding pods. See [REALTIME.md](REALTIME.md) for the protocol and the constraints that
-enforce this.
+zone, never adding pods.
 
 **Team and timeline.** Solo developer with realtime experience, AI-assisted. A first playable slice is
 a matter of months; **the full game as described is not a solo project** — realistically a funded team
