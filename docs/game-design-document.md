@@ -135,11 +135,10 @@ questions under Detailed & Game Systems Design.)
 
 Slimes are rounded, bouncy, viscous cubes jumping around. What changes with rank is the camera's
 *distance*, never the art and never the angle — near the slime at layer 1, pulled back over a section
-at layer 2, high over the continent at layer 3. **The camera is isometric and does not rotate**, which
-is a technical constraint as much as a stylistic one: crisp pixel rendering of a 3D scene breaks down
-under rotation. That in turn constrains the world's architecture — buildings and the monument have to
-stay low-profile enough not to hide slimes behind them, because occlusion is what creates the demand
-for a rotating camera in the first place.
+at layer 2, high over the continent at layer 3. **The camera is isometric and does not rotate.** That
+constrains the world's architecture — buildings and the monument have to stay low-profile enough not
+to hide slimes behind them, because occlusion is what creates the demand for a rotating camera in the
+first place.
 
 Reference: Red Giraffe's *Pixel Perfect* series and the *TowerKeep* devlogs, distilled in
 [the source notes](sources/2026-08-24_towerkeep_pixel_perfect.md) — worth reading before the renderer
