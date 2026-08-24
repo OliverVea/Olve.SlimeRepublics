@@ -135,14 +135,16 @@ questions under Detailed & Game Systems Design.)
 
 Slimes are rounded, bouncy, viscous cubes jumping around. What changes with rank is the camera's
 *distance*, never the art and never the angle — near the slime at layer 1, pulled back over a section
-at layer 2, high over the continent at layer 3. **The camera is isometric and does not rotate.** That
+at layer 2, high over the world at layer 3. **The camera is isometric and does not rotate.** That
 constrains the world's architecture — buildings and the monument have to stay low-profile enough not
 to hide slimes behind them, because occlusion is what creates the demand for a rotating camera in the
 first place.
 
-Reference: Red Giraffe's *Pixel Perfect* series and the *TowerKeep* devlogs, distilled in
-[the source notes](sources/2026-08-24_towerkeep_pixel_perfect.md) — worth reading before the renderer
-is specified.
+**How far the pixel treatment goes into the 3D world is deliberately open.** The UI is pixel art
+either way. The world starts as plain stylised 3D and may stay there; making it read as pixel art too
+is a direction, not a commitment. Reference for that direction: Red Giraffe's *Pixel Perfect* series
+and the *TowerKeep* devlogs, distilled in
+[the source notes](sources/2026-08-24_towerkeep_pixel_perfect.md).
 
 Every interface element sits in front of that world as crisp 2D pixel art: HUD, panels, bounty markers, the merit meter, the influence pool. The contrast is the point — the world is soft and wobbling, the instrumentation is hard and legible.
 
@@ -158,10 +160,10 @@ Audio: chunky, wet, and low-fi. Squelch, plop, and a bass thud for a comet. The 
 
 There is deliberately **very little authored fiction**, and that is the design.
 
-What the player is told: the world is a **continent**, roughly rectangular. A **tile** is one slime's
-space; a **section** is a block of tiles, and the unit leadership opens or closes; the continent is
-the whole board. Whether anything sits above the continent — a planet, several planets — is undecided
-and deliberately unwritten. Three slime factions — **blue, black, and pink** — contest it. At the center stands a monument that will answer to whichever faction feeds it
+What the player is told: a **tile** is one slime's space; a **section** is a block of tiles, and the
+unit leadership opens or closes; a **world** is the set of sections that forms one board, and is
+roughly rectangular. What a world *is* in fiction — a continent, an island, a planet — is undecided
+and deliberately unwritten, as is whether anything sits above it. Three slime factions — **blue, black, and pink** — contest it. At the center stands a monument that will answer to whichever faction feeds it
 enough. Comets fall carrying rare material. That's roughly it.
 
 Everything else is written by the players. Each faction gets a renameable banner, a faction name, and
@@ -212,8 +214,8 @@ design depends on: the camera is **isometric and does not rotate**, and the worl
 low-profile enough not to occlude slimes. Everything else about the renderer — how the pixel look is
 actually resolved, what it costs — is a technical decision, not a design one.
 
-**Server.** One authoritative process owns one **continent**; the world grows by adding continents,
-not by adding servers to a continent. That is the only server fact this document depends on.
+**Server.** One authoritative process owns one **world**; the game grows by adding worlds, not by
+adding servers to a world. That is the only server fact this document depends on.
 
 *How any of this is built lives in [tech-design.md](tech-design.md), which is the authority. This
 document should not be read as having decided tick rates, protocols, replica counts, or budgets.*
