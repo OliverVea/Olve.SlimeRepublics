@@ -127,9 +127,11 @@ questions under Detailed & Game Systems Design.)
 
 > *What is the "look and feel" of the game? How does this support the desired player's experience? What concept art or reference art can you show to give the feel of the game?*
 
-**Cute, slightly violent pixel art — the same pixel art at every layer.** No stylistic break between the slime's-eye view and the war table. Layer 3's map is literally a zoomed-out rendering of the tiles layer 1 walks on.
+**A real-time 3D world under a pixelated 2D UI.** Chunky low-poly geometry with a stylised shader pass — cute, slightly violent, and the same look at every layer. No stylistic break between the slime's-eye view and the war table: layer 3's map is literally the same world layer 1 walks on, seen from further out.
 
-Tiled and isometric. Slimes are rounded, bouncy, viscous cubes jumping around.
+Slimes are rounded, bouncy, viscous cubes jumping around. What changes with rank is the camera, never the art — close behind the slime at layer 1, raised and angled over a section at layer 2, high over the region at layer 3.
+
+Every interface element sits in front of that world as crisp 2D pixel art: HUD, panels, bounty markers, the merit meter, the influence pool. The contrast is the point — the world is soft and wobbling, the instrumentation is hard and legible.
 
 Audio: chunky, wet, and low-fi. Squelch, plop, and a bass thud for a comet. The soundscape should carry rank — a layer 3 player hears the world muted and distant, a slime hears it up close. No in-game voice chat. In-game emoji system with accompanying cute slime voices.
 
