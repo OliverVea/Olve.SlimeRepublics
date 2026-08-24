@@ -45,11 +45,14 @@ The handful of rules that shape everything else:
 - **Exactly one server process may run at a time** (`replicaCount: 1`, `strategy: Recreate`). The
   world exists only in that process's memory, so a second pod would not share the load — it would
   run a *second, separate world*, and the Service would send some players to one and some to the
-  other with nothing logged and no error raised. Scaling out therefore means splitting the map into
-  zones with a router in front, never raising the replica count. The cost of the rule is that every
-  deploy disconnects everyone.
-- **The tick loop never blocks.** It enqueues to bounded per-connection channels and moves on. One
-  slow client falls behind and is eventually disconnected; it cannot stall the simulation.
+  other with nothing logged and no error raised. The cost of the rule is that every deploy
+  disconnects everyone.
+- **The tick loop never blocks.** It hands each connection a frame and moves on; a slow client can
+  never apply backpressure to the simulation.
+- **Clients are sent absolute state, newest wins.** Each connection holds one outbound slot for world
+  state, and a new snapshot replaces an unsent one — a client that stalls resumes at the current
+  world rather than replaying stale ones. Control frames travel a separate reliable lane and are
+  never dropped.
 - **Authority comes from the socket, not the frame.** No inbound frame carries an actor id, so there
   is no such thing as a message that acts on someone else's slime.
 - **`RealtimeProtocol.cs` and `frontend/src/realtime/protocol.ts` are one contract with no compiler
