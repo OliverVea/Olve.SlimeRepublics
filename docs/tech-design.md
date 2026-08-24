@@ -14,29 +14,7 @@ High-level architecture and the components the system is assembled from. Detail 
 
 One ASP.NET Core process, one container, one pod. A single Kestrel listener serves three surfaces:
 
-```
-                    ┌─────────────────────────────────────────┐
-   browser ────────►│  /            SPA (wwwroot)   anonymous │
-                    │  /api/*       JSON API        JWT       │
-                    │  /ws          binary socket   ticket    │
-                    └────────────────┬────────────────────────┘
-                                     │
-                    ┌────────────────┴────────────────────────┐
-                    │  hot state          durable state       │
-                    │  SlimeWorld         EntityStore<T>      │
-                    │  (in memory,        + persister         │
-                    │   never persisted)  (snapshot to disk)  │
-                    └─────────────────────────────────────────┘
-```
-
-Two ideas carry most of the weight:
-
-**HTTP owns credentials, the socket owns the hot path.** No JWT ever reaches the socket, and no game
-frame does auth work. A short-lived single-use ticket is the only bridge between them.
-
-**Hot state and durable state are kept apart.** `SlimeWorld` is in memory, mutated by exactly one
-thread, and lost on restart by design. Everything that must survive lives in an `EntityStore<T>`
-behind a persister. The tick loop never awaits disk, database, or network.
+<img src="assets/architecture.svg" alt="Architecture: browser, three request surfaces, one server process holding hot and durable state" width="100%">
 
 ---
 
@@ -51,9 +29,10 @@ behind a persister. The tick loop never awaits disk, database, or network.
 | **Logging & telemetry** | `Configuration/TelemetryConfiguration.cs`, `OAuth2TokenProvider.cs` | OpenTelemetry for traces, metrics **and logs**, exported over OTLP. Optional OAuth2 client-credentials auth on the exporter. **Entirely opt-in and never fatal** — no `OpenTelemetry:Endpoint` configured means the whole block is skipped and the app runs on console logging alone. |
 | **Health** | `Health/HealthEndpoints.cs` | `GET /health`, anonymous, unconditional 200. Liveness only — deliberately not a readiness or dependency check. |
 | **Persistence** | `Stores/` | `EntityStore<T>` plus an optional `EntityStorePersister<T>`: whole-snapshot, debounced, loaded on startup, flushed on shutdown. Pluggable via the two-method `ISnapshotStore`; ephemeral by default, `FileSnapshotStore` when persistent. Cannot overwrite good state with empty. |
-| **Realtime** | `Realtime/` | The game transport: ticket issue/redeem, WebSocket upgrade, per-connection send pump, the authoritative world, and the 20 Hz tick loop. See [REALTIME.md](REALTIME.md). |
+| **Realtime** | `Realtime/` | The game transport and the authoritative world. See [REALTIME.md](REALTIME.md). |
 | **Messages** | `Messages/` | **Template scaffold, not game state.** Exercises the CRUD/validation/persistence path inherited from `Olve.Template.Api`. |
-| **Frontend** | `frontend/src/` | Vanilla TypeScript, no framework runtime. Vite build, Vitest tests, Biome lint. `api/` is Kiota-generated from `api.json`; `realtime/` is hand-written. |
+| **SPA shell** | `frontend/src/` | Vanilla TypeScript, no framework runtime. Vite build, Vitest tests, Biome lint. `api/` is Kiota-generated from `api.json`; `realtime/` is hand-written. |
+| **Game client** | `frontend/` (own entry) | Real-time 3D — polygon style with a stylised shader pass, rendered with three.js. Built as a separate Vite entry point so the game bundle carries none of the CRUD/admin UI. |
 | **Build & versioning** | `tools/version.cs`, `Dockerfile` | Version derived from git; the SPA is built and copied into `wwwroot` at image build time. |
 | **Deployment** | `.pipelines/`, `helm/` | GitOps via Olve.Pipelines. ClusterIP-only chart; public routing is registered in Olve.Homelab, not here. |
 
@@ -63,9 +42,12 @@ behind a persister. The tick loop never awaits disk, database, or network.
 
 The handful of rules that shape everything else:
 
-- **`replicaCount` stays 1, and the Deployment is `strategy: Recreate`.** The world is in-process
-  singleton state — two pods behind one Service is two divergent simulations, not scale-out.
-  Restarts are visible to players; the world is lost, durable state is not.
+- **Exactly one server process may run at a time** (`replicaCount: 1`, `strategy: Recreate`). The
+  world exists only in that process's memory, so a second pod would not share the load — it would
+  run a *second, separate world*, and the Service would send some players to one and some to the
+  other with nothing logged and no error raised. Scaling out therefore means splitting the map into
+  zones with a router in front, never raising the replica count. The cost of the rule is that every
+  deploy disconnects everyone.
 - **The tick loop never blocks.** It enqueues to bounded per-connection channels and moves on. One
   slow client falls behind and is eventually disconnected; it cannot stall the simulation.
 - **Authority comes from the socket, not the frame.** No inbound frame carries an actor id, so there
@@ -74,21 +56,8 @@ The handful of rules that shape everything else:
   between them.** Change both; tests pin the layout by byte offset.
 - **Telemetry is opt-in and never fatal.** Misconfigured or absent observability must not take the
   app down.
-- **Startup order matters.** `StartAsync` (persister loads) → `RunAsyncOnStartup` (seeders, against
-  populated stores) → `WaitForShutdownAsync`. Long-running work is a `BackgroundService`, not a
-  startup task.
-
----
-
-## 4. Known loose ends
-
-- Seven citations of a `docs/DESIGN.md` that does not exist here — it is `Olve.Template.Api`'s
-  design doc, and the references were inherited when this repo was scaffolded from it. They appear
-  in `Stores/EntityStorePersister.cs`, `Stores/StorageMode.cs`, `AppJsonContext.cs`,
-  `frontend/src/base-element.ts` (×2), `frontend/src/base-element.test.ts` and
-  `frontend/src/components/message-list.ts`. Each surrounding comment states its point in full, so
-  the citation can be dropped without losing anything.
-- The snapshot count field is a `uint16`, so 65535 connections is the hard protocol ceiling
-  regardless of `MaxConnections`.
-- The `Messages` slice is scaffold and is to be removed once a real game slice has been built the
-  same way — it is kept only as the worked example of the CRUD/validation/persistence path.
+- **Durable state is loaded before anything runs and flushed on the way out.** Startup order is
+  `StartAsync` (persister loads) → `RunAsyncOnStartup` (seeders, against populated stores) →
+  `WaitForShutdownAsync`; on shutdown the persister cancels its debounce timer and writes
+  unconditionally, so a clean stop never loses a pending save. Long-running work is a
+  `BackgroundService`, not a startup task.
