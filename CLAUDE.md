@@ -19,6 +19,30 @@ dotnet run --project src/Olve.SlimeRepublics                  # Run locally
 - Local config via `dotnet user-secrets`, not appsettings files
 - OpenAPI spec `api.json` is generated on build by `Microsoft.Extensions.ApiDescription.Server`
 
+## Realtime (WebSockets)
+
+Clients talk to the server over a raw WebSocket at `/ws` with a binary protocol — **read
+[docs/REALTIME.md](docs/REALTIME.md) before touching `src/Olve.SlimeRepublics/Realtime/`**. The
+non-obvious constraints, each of which is load-bearing:
+
+- **`WebSocket.SendAsync` allows one send in flight per socket.** Never send from the tick loop.
+  Enqueue to the connection's bounded channel; its single pump task is the only caller of
+  `SendAsync`, including on close.
+- **`MapRealtimeEndpoint` is `AllowAnonymous()` on purpose.** The app's `RequireAuthenticatedUser`
+  fallback policy would reject the upgrade before the handler runs, and a rejected upgrade reaches
+  browser JS as a bare error with no status — an invisible 401. The single-use ticket redeemed in
+  the handler *is* the authentication.
+- **No client frame carries an actor id.** Authority comes from which socket the bytes arrived on
+  (`RealtimeConnection.EntityId`, stamped at handshake). This is what replaces per-message signing —
+  do not add an entity id to an inbound frame.
+- **`RealtimeProtocol.cs` and `frontend/src/realtime/protocol.ts` are one contract with no compiler
+  between them.** Change both. `RealtimeProtocolTests` pins the layout by byte offset.
+- **`replicaCount` must stay 1 and the Deployment is `strategy: Recreate`.** The world is in-process
+  singleton state; two pods behind one Service is a silent world fork. Scaling out means sharding by
+  zone, not raising the replica count.
+- **The tick loop is a `BackgroundService`, not `IAsyncOnStartup`** — the latter is for one-shot
+  startup tasks and would block the host.
+
 ## Deployment (GitOps)
 
 This repo deploys via **Olve.Pipelines** — the `.pipelines/` directory is the live deploy config
