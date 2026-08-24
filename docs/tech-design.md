@@ -80,23 +80,15 @@ The handful of rules that shape everything else:
 
 ---
 
-## 4. Status
+## 4. Known loose ends
 
-**As of `c866710`.** The transport and the state discipline are built: authenticated realtime,
-one authoritative simulation thread, server-authoritative movement, and the durable-store pattern
-ready for game entities.
-
-The game is not. There are no layers, factions, tiles, combat, resources, or objectives — a slime is
-`(id, x, y)` in a single flat arena. World state is also not yet snapshotted, so a deploy wipes it;
-the durable half of that split exists, the world half does not.
-
----
-
-## 5. Known loose ends
-
-- Seven references to a `docs/DESIGN.md` that does not exist, inherited from `Olve.Template.Api`:
-  `Stores/EntityStorePersister.cs`, `Stores/StorageMode.cs`, `AppJsonContext.cs`,
-  `frontend/src/base-element.ts` (×2), `frontend/src/base-element.test.ts`,
-  `frontend/src/components/message-list.ts`. Left pointing where they were rather than retargeted.
+- Seven citations of a `docs/DESIGN.md` that does not exist here — it is `Olve.Template.Api`'s
+  design doc, and the references were inherited when this repo was scaffolded from it. They appear
+  in `Stores/EntityStorePersister.cs`, `Stores/StorageMode.cs`, `AppJsonContext.cs`,
+  `frontend/src/base-element.ts` (×2), `frontend/src/base-element.test.ts` and
+  `frontend/src/components/message-list.ts`. Each surrounding comment states its point in full, so
+  the citation can be dropped without losing anything.
 - The snapshot count field is a `uint16`, so 65535 connections is the hard protocol ceiling
   regardless of `MaxConnections`.
+- The `Messages` slice is scaffold and is to be removed once a real game slice has been built the
+  same way — it is kept only as the worked example of the CRUD/validation/persistence path.
