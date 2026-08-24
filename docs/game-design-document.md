@@ -104,7 +104,7 @@ commander is arguing about; a general can watch their decision land as slimes fl
 one layer at a time, or can drop back down to fight while holding a seat, is unsettled — see the open
 questions under Detailed & Game Systems Design.)
 
-- **Layer 1 — the slime.** Third-person, one body, one color. You fight other factions' slimes over
+- **Layer 1 — the slime.** Isometric, one body, one color. You fight other factions' slimes over
   resources, haul what you win, raise buildings your faction depends on, and upgrade yourself. Death
   is comic and cheap: you splatter, you wobble back together fifteen seconds later. Your real
   investment is your upgrades and your merit, never your body.
@@ -129,7 +129,17 @@ questions under Detailed & Game Systems Design.)
 
 **A real-time 3D world under a pixelated 2D UI.** Chunky low-poly geometry with a stylised shader pass — cute, slightly violent, and the same look at every layer. No stylistic break between the slime's-eye view and the war table: layer 3's map is literally the same world layer 1 walks on, seen from further out.
 
-Slimes are rounded, bouncy, viscous cubes jumping around. What changes with rank is the camera, never the art — close behind the slime at layer 1, raised and angled over a section at layer 2, high over the region at layer 3.
+Slimes are rounded, bouncy, viscous cubes jumping around. What changes with rank is the camera's
+*distance*, never the art and never the angle — near the slime at layer 1, pulled back over a section
+at layer 2, high over the continent at layer 3. **The camera is isometric and does not rotate**, which
+is a technical constraint as much as a stylistic one: crisp pixel rendering of a 3D scene breaks down
+under rotation. That in turn constrains the world's architecture — buildings and the monument have to
+stay low-profile enough not to hide slimes behind them, because occlusion is what creates the demand
+for a rotating camera in the first place.
+
+Reference: Red Giraffe's *Pixel Perfect* series and the *TowerKeep* devlogs, distilled in
+[the source notes](sources/2026-08-24_towerkeep_pixel_perfect.md) — worth reading before the renderer
+is specified.
 
 Every interface element sits in front of that world as crisp 2D pixel art: HUD, panels, bounty markers, the merit meter, the influence pool. The contrast is the point — the world is soft and wobbling, the instrumentation is hard and legible.
 
@@ -145,8 +155,10 @@ Audio: chunky, wet, and low-fi. Squelch, plop, and a bass thud for a comet. The 
 
 There is deliberately **very little authored fiction**, and that is the design.
 
-What the player is told: the world is a tiled continent. Three slime factions — **blue, black, and
-pink** — contest it. At the center stands a monument that will answer to whichever faction feeds it
+What the player is told: the world is a **continent**, roughly rectangular, divided into **sections**.
+A section is the unit slimes move between and leadership opens or closes; the continent is the whole
+board. Whether anything sits above the continent — a planet, several planets — is undecided and
+deliberately unwritten. Three slime factions — **blue, black, and pink** — contest it. At the center stands a monument that will answer to whichever faction feeds it
 enough. Comets fall carrying rare material. That's roughly it.
 
 Everything else is written by the players. Each faction gets a renameable banner, a faction name, and
@@ -192,7 +204,13 @@ onboarding path, which matters enormously for a game that needs a crowd. Layer 3
 a natural fit for a phone at lunch, so mobile is a later target for that layer specifically rather
 than for the whole game.
 
-**Rendering.** 2D pixel sprites throughout, WebGL-batched. No 3D.
+**Rendering.** A 3D scene resolved to a pixel-art image, plus a 2D pixel UI on top. The requirements,
+rather than the stack: render to a fixed low-resolution target with point filtering and upscale with a
+point-clamp sampler; quantize to a per-faction palette in a perceptually-uniform color space, so the
+palette stays swappable GPU data; derive outlines from depth and normal buffers rather than color, and
+apply them selectively; keep the camera isometric and non-rotating, with grid-snapped translation.
+**Which browser 3D stack delivers this is undecided** — see the source notes; the reference
+implementation is Unity, which does not apply here.
 
 **Server.** A single authoritative .NET process holding the whole world in memory, with a fixed tick
 loop as a `BackgroundService` and raw binary WebSockets rather than SignalR or JSON. Input commands
@@ -217,9 +235,12 @@ order, is not decided here.
    *and* that being commanded feels good rather than like being someone's unit. Neither half can be
    validated with bots or alone — only by putting real people on both sides of a seat. Everything
    above layer 1 rests on this being true.
-3. **Netcode at scale.** Server-authoritative combat at ~20Hz with interest management is solved but
-   not free; the classic failure is a build that is fine at thirty players and falls over at three
-   hundred. Client-side interpolation is the specific thing that eats the time.
+3. **Netcode at scale, and now a heavy client alongside it.** Server-authoritative combat at ~20Hz
+   with interest management is solved but not free; the classic failure is a build that is fine at
+   thirty players and falls over at three hundred, and client-side interpolation is the specific thing
+   that eats the time. The 3D pixel pipeline adds a second budget on the same frame — multi-pass
+   rendering with G-buffer outlines and palette quantization, in a browser, over hundreds of slimes.
+   Neither half is exotic; running both at once with no install is the risk.
 4. **Moderation and politics.** Elective hierarchy invites griefers seeking command, vote brigading,
    alt accounts, and a leader who logs off mid-siege out of spite. Games with player-run power
    structures reliably spend more on this than on gameplay, and it is not currently budgeted.
@@ -237,6 +258,9 @@ order, is not decided here.
 >   with population) unreconciled against fixed *seat counts* per faction (so population advantage
 >   converts into management dilution instead of raw dominance). Nearly every system below depends on
 >   which one is true.
+> - **Zoom between layers.** Grid-snapped *translation* is a solved problem and rotation is a known
+>   dead end, but zoom is neither. A small number of discrete stops — one fixed pixel grid per layer —
+>   is the safe version; continuous zoom may be as intractable as rotation. Untested.
 > - **Layer occupancy.** Whether holding a layer 2 or 3 seat means you *are* that layer for the
 >   session, or whether you can drop back down to your slime while your seat idles, was never settled.
 >   It determines what handover, deputies, and logout mean.
