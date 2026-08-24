@@ -75,7 +75,7 @@ Broadly **teen-and-up (ESRB T)**: cartoon violence, no gore, no realistic weapon
 Hierarchical strategy games are usually one player operating a stack of menus. Here each tier of the
 hierarchy is a different human, playing live, at their own clock speed — seconds at layer 1, tens of
 seconds at layer 2, hours and days at layer 3. A slime can look up and see the front line their
-commander is arguing about; a general can watch their decision land as slimes flood a tile.
+commander is arguing about; a general can watch their decision land as slimes flood a section.
 
 **2. Cozy game you come back to.**
 <to be filled>
@@ -224,7 +224,7 @@ order, is not decided here.
 
 ## Detailed & Game Systems Design
 
-> **Not yet drafted.** The source material covers much of this — tile activation and the influence
+> **Not yet drafted.** The source material covers much of this — section activation and the influence
 > pool, comets and prediction cones, the monument haul, merit and promotion, upkeep and anti-snowball,
 > seasons and what survives a reset. It is deliberately deferred to a later pass rather than being
 > half-specified here.
