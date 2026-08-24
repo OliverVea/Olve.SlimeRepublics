@@ -67,7 +67,11 @@ Players who come for **other people** and to actively participate in their facti
 
 The layers should get progressively more demanding in what to pay attention to. It's impossible to do everything at layer 3 so a successful player focuses on the right things to maximize impact.
 
-Nobody is required to climb. A player who never leaves layer 1 should have a complete game.
+Nobody is required to climb. A player who never leaves layer 1 should have a complete game — and so
+should a *faction* where nobody has. Five slimes with no commander and no leadership is a functioning
+faction playing a real game, just an unamplified one. At the same time **at least one seat exists at
+each layer regardless of population**, so a faction of five can put someone in the commander's chair
+on day one rather than waiting to unlock it. Seats scale up from there; they never start closed.
 
 Broadly **teen-and-up (ESRB T)**: cartoon violence, no gore, no realistic weapons — but with player-to-player communication and player-run power structures, which is the actual reason for the rating and a real design obligation (see Game Systems, `_TBD_`).
 
@@ -81,11 +85,30 @@ hierarchy is a different human, playing live, at their own clock speed — secon
 seconds at layer 2, hours and days at layer 3. A slime can look up and see the front line their
 commander is arguing about; a general can watch their decision land as slimes flood a section.
 
-**2. Cozy game you come back to.**
-<to be filled>
+**2. Cozy, and playing small is a fair way to play.** You can mine, build, and mind your own
+business — alone, quietly, contributing a little — and that is a legitimate way to play this game
+rather than a lesser one. No group is required, no schedule is required, nobody has to talk to you or
+approve of you. The faction war is happening and you are part of it by doing your small thing in the
+corner of it.
 
-**3. Massive multiplayer, quick drop in drop out.**
-<to be filled>
+The joke, and the texture, is that cozy holds right up until six enemy slimes come over the hill. The
+peace is real and so is the violence, and because death is comic and cheap, being wiped out is funny
+rather than ruinous. That contrast is the feeling to protect: a calm loop you can sink into, with the
+whole game able to arrive at any moment.
+
+**3. Massively multiplayer, and you can leave whenever.** Hundreds of players in one live world, with
+no raid times, no scheduling, and nothing you have to be present for. You drop in, do a thing, and
+drop out, at any layer.
+
+Making that true above layer 1 is a structural commitment: **seats survive absence**. A commander who
+closes the tab hands off down a deputy chain rather than leaving twenty people stranded, and the
+world keeps functioning as well as it reasonably can. Losing your leadership for a while must never be
+a death sentence.
+
+Which sets the central balance problem this design has to solve: **leadership amplifies, it never
+gates.** Leaders have to be genuinely worth having, or layers 2 and 3 are decoration — and layer 1 has
+to be genuinely worth playing unled, or the cozy promise is a lie the first time a commander goes to
+bed. Both halves have to be true at once, and tuning that is real work rather than a detail.
 
 **Supporting differentiators**, which matter but do not lead:
 
@@ -227,11 +250,13 @@ order, is not decided here.
 
 **Major risks**, in the order they are likely to kill the project:
 
-1. **Population, not servers.** The design needs enough concurrent players to staff three pyramids
-   at once before it demonstrates its own thesis. Below that threshold the world is empty and seats
-   are inert — and inert seats are *deliberately* unfun. That makes the early experience the broken
-   one, which is the opposite of what a soft launch needs. Where the threshold actually sits depends
-   on layer sizing, which is not settled.
+1. **Population.** The design does not show its own thesis until enough concurrent players staff
+   three pyramids at once, and the interesting content is the interaction between strangers at
+   different ranks. A thin population is therefore a thin *game*, even though it is a playable one:
+   layer 1 alone works and a seat is always open, so the floor degrades rather than breaks. The risk
+   is not a broken early build — it is a build that works and looks unremarkable, because everything
+   that makes it worth playing needs a crowd to appear. Where the threshold sits depends on layer
+   sizing, which is not settled.
 2. **The core bet is untested and hard to test.** The design assumes commanding real humans is fun
    *and* that being commanded feels good rather than like being someone's unit. Neither half can be
    validated with bots or alone — only by putting real people on both sides of a seat. Everything
