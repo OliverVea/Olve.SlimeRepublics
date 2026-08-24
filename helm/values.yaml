@@ -1,7 +1,7 @@
-# Must stay 1. One server owns one continent, held as in-process singleton state, so a second
+# Must stay 1. One game server owns one game world, held as in-process singleton state, so a second
 # replica would run a second, divergent copy and the Service would round-robin players between them
-# with no way to notice. Growing the world means adding continents, each with its own server, not
-# raising this number.
+# with no way to notice. Growing past one world means adding game servers, not raising this
+# number.
 replicaCount: 1
 
 image:

@@ -51,7 +51,7 @@
 
   <!-- server -->
   <rect class="outer" x="40" y="188" width="820" height="300" rx="8"/>
-  <text class="dim" x="58" y="211" font-size="13" font-weight="600">Server — one process, one pod, one continent</text>
+  <text class="dim" x="58" y="211" font-size="13" font-weight="600">Game server — one process, one pod, one world</text>
   <rect class="strip" x="62" y="222" width="776" height="30" rx="5"/>
   <text class="dim" x="78" y="242" font-size="12">Kestrel · single listener</text>
 
