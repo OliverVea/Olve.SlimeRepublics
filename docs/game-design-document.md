@@ -118,14 +118,28 @@ bed. Both halves have to be true at once, and tuning that is real work rather th
 
 **Supporting differentiators**, which matter but do not lead:
 
-- **Command by incentive, never by order.** <there should be a chat so it's natural that there will be directions or orders given but it's not enforced directly by the game>
+- **Command by incentive, never by order.** There is a chat, so directions and orders get given —
+  that is natural and welcome. The game simply never enforces them. A commander's messages are
+  visually distinct in chat and nothing more; no broadcast channel, no compulsory objective, no
+  mechanical weight behind their words. Their real power is the faucet: bounties, buffs, and where
+  the world is open. Ignoring a commander is an ordinary thing to do, not a betrayal — which is what
+  keeps minding your own business a fair way to play.
 - **Elective hierarchy and player-authored culture.** Seats are climbed to and lost. Factions name
   their own ranks and invent their own politics; the developers lean into whatever meaning the
   player base assigns each color rather than authoring it up front. <Ideally, I want fan art giving the factions personalities. This is why I suggested Blue, Black, and Pink. I think all have different inherent symbolism so hopefully the players pick up on that and make it their own.>
-- **Three-faction diplomacy where third place has the leverage.** <Actually, I think it'd be better if everyone just plays to win and there's no point in being #2>
-- **A physical win condition.** The endgame is not a counter in a menu. It is one ordinary,
-  glowing, slow slime waddling across open ground with the faction's entire haul on its back,
-  visible to everyone, lootable by anyone. <Let's not determine this in the design doc directly. I think standings and progress on the win condition should be public. I like the idea of the resource carrier being ambushed, but I also like the idea of a team keeping their high resource count covert until they finally gamble it all and cash it in for a win.>
+- **Three factions, all playing to win.** No consolation for second, no leverage in being third, no
+  formal diplomacy mechanic — three factions racing the same race. Deals happen because players make
+  them, not because the game hands third place something to sell. **This leaves anti-snowball
+  unanswered and deliberately so:** the public standings readout means a runaway leader is visible to
+  everyone, and whether that is enough — or whether upkeep, an attackable objective, or the shortness
+  of a season has to do the work — is a question for playtesting, not for this document.
+- **A physical win condition: hoard in private, spend in public.** What a faction has *banked* is
+  public — standings and progress toward the win are visible to everyone, always. What a faction has
+  *stockpiled but not yet delivered* is its own business. So a faction can build quietly toward
+  something nobody else can see, and then has to expose it: the delivery is slow, loud, and
+  interceptable, one ordinary glowing slime waddling across open ground with the haul on its back.
+  The exact mechanic is not settled here; the shape is — secret accumulation, then a public,
+  contestable moment of commitment.
 
 ## Product Design
 
@@ -153,7 +167,9 @@ questions under Detailed & Game Systems Design.)
 - **Short arc:** a fight, a haul, a comet.
 - **Medium arc:** a building raised, a squad kept alive, a front opened.
 - **Long arc:** a monument bar climbing, a tunnel network inherited, a seat climbed toward.
-- **A visible standings readout at all three layers.** <rewrite based on my feedback>
+- **A visible standings readout at all three layers.** Where every faction stands, and how close
+  each is to winning, is public and always on screen — down to the layer 1 HUD. A slime out mining
+  should be able to feel the season turning without asking anyone.
 - **Seasons.** A faction wins in roughly two weeks; the world resets and the person persists. The pit is never more than days from ending.
 
 ### Visual and Audio Style
