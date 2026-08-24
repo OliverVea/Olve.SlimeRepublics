@@ -53,6 +53,13 @@ The handful of rules that shape everything else:
   state, and a new snapshot replaces an unsent one — a client that stalls resumes at the current
   world rather than replaying stale ones. Control frames travel a separate reliable lane and are
   never dropped.
+- **A section is the unit of visibility and of encoding.** A *tile* is one slime's space; a
+  *section* is the n×n block of tiles that forms one map. A connection subscribes to one section,
+  and world state is encoded once per faction per active section — every connection of that faction
+  watching that section is handed the same bytes. Encoding therefore scales with how much world is
+  live, not with how many players are connected. Fog is a faction property, so the faction is the
+  boundary the server enforces; a narrower per-slime view range is rendered client-side.
+  Subscriptions change only at tick boundaries, so dispatch iterates a set nobody is writing to.
 - **Authority comes from the socket, not the frame.** No inbound frame carries an actor id, so there
   is no such thing as a message that acts on someone else's slime.
 - **`RealtimeProtocol.cs` and `frontend/src/realtime/protocol.ts` are one contract with no compiler
