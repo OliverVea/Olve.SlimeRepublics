@@ -5,6 +5,10 @@
 still `_TBD_`.
 **Scope:** this document describes the **full vision**, not the first prototype. Where a section
 names something not yet built, that is deliberate.
+**Altitude:** this is the highest-level document, and it is written top-down. It should state what the
+game *is* and what it *needs*, never how it is built — no tick rates, protocols, or budgets. Technical
+decisions live in [tech-design.md](tech-design.md) and are made when that level is reached, not
+inherited from early conversation.
 **Template:** [Game Design Concept and Pitch Template](sources/2018-02-22_game_concept_document_template.md) by Michael Sellers.
 
 > Fill a section by replacing its `_TBD_` with prose. Leave the italic prompt in place — it is the
@@ -155,10 +159,10 @@ Audio: chunky, wet, and low-fi. Squelch, plop, and a bass thud for a comet. The 
 
 There is deliberately **very little authored fiction**, and that is the design.
 
-What the player is told: the world is a **continent**, roughly rectangular, divided into **sections**.
-A section is the unit slimes move between and leadership opens or closes; the continent is the whole
-board. Whether anything sits above the continent — a planet, several planets — is undecided and
-deliberately unwritten. Three slime factions — **blue, black, and pink** — contest it. At the center stands a monument that will answer to whichever faction feeds it
+What the player is told: the world is a **continent**, roughly rectangular. A **tile** is one slime's
+space; a **section** is a block of tiles, and the unit leadership opens or closes; the continent is
+the whole board. Whether anything sits above the continent — a planet, several planets — is undecided
+and deliberately unwritten. Three slime factions — **blue, black, and pink** — contest it. At the center stands a monument that will answer to whichever faction feeds it
 enough. Comets fall carrying rare material. That's roughly it.
 
 Everything else is written by the players. Each faction gets a renameable banner, a faction name, and
@@ -204,19 +208,16 @@ onboarding path, which matters enormously for a game that needs a crowd. Layer 3
 a natural fit for a phone at lunch, so mobile is a later target for that layer specifically rather
 than for the whole game.
 
-**Rendering.** A 3D scene resolved to a pixel-art image, plus a 2D pixel UI on top. The requirements,
-rather than the stack: render to a fixed low-resolution target with point filtering and upscale with a
-point-clamp sampler; quantize to a per-faction palette in a perceptually-uniform color space, so the
-palette stays swappable GPU data; derive outlines from depth and normal buffers rather than color, and
-apply them selectively; keep the camera isometric and non-rotating, with grid-snapped translation.
-**Which browser 3D stack delivers this is undecided** — see the source notes; the reference
-implementation is Unity, which does not apply here.
+**Rendering.** A real-time 3D world with a stylised shader pass, under a 2D pixel UI. Two things the
+design depends on: the camera is **isometric and does not rotate**, and the world's geometry stays
+low-profile enough not to occlude slimes. Everything else about the renderer — how the pixel look is
+actually resolved, what it costs — is a technical decision, not a design one.
 
-**Server.** A single authoritative .NET process holding the whole world in memory, with a fixed tick
-loop as a `BackgroundService` and raw binary WebSockets rather than SignalR or JSON. Input commands
-land in a queue that the tick drains; world state is never mutated from a socket handler. The world
-is in-process singleton state, which means **exactly one replica** — scaling out means sharding by
-zone, never adding pods.
+**Server.** One authoritative process owns one **continent**; the world grows by adding continents,
+not by adding servers to a continent. That is the only server fact this document depends on.
+
+*How any of this is built lives in [tech-design.md](tech-design.md), which is the authority. This
+document should not be read as having decided tick rates, protocols, replica counts, or budgets.*
 
 **Team and timeline.** Solo developer with realtime experience, AI-assisted. A first playable slice is
 a matter of months; **the full game as described is not a solo project** — realistically a funded team
@@ -225,21 +226,19 @@ order, is not decided here.
 
 **Major risks**, in the order they are likely to kill the project:
 
-1. **Population, not servers.** At 20:1, layer 2 needs twenty concurrent slimes to feel like
-   anything and layer 3 needs the whole pyramid staffed across three factions — realistically
-   500–1,000 concurrent players before the design proves its own thesis. Below that, maps are empty
-   and seats are inert, and inert seats are *deliberately* unfun. This cannot be soft-launched into,
-   because the early experience is the broken one.
+1. **Population, not servers.** The design needs enough concurrent players to staff three pyramids
+   at once before it demonstrates its own thesis. Below that threshold the world is empty and seats
+   are inert — and inert seats are *deliberately* unfun. That makes the early experience the broken
+   one, which is the opposite of what a soft launch needs. Where the threshold actually sits depends
+   on layer sizing, which is not settled.
 2. **The core bet is untested and hard to test.** The design assumes commanding real humans is fun
    *and* that being commanded feels good rather than like being someone's unit. Neither half can be
    validated with bots or alone — only by putting real people on both sides of a seat. Everything
    above layer 1 rests on this being true.
-3. **Netcode at scale, and now a heavy client alongside it.** Server-authoritative combat at ~20Hz
-   with interest management is solved but not free; the classic failure is a build that is fine at
-   thirty players and falls over at three hundred, and client-side interpolation is the specific thing
-   that eats the time. The 3D pixel pipeline adds a second budget on the same frame — multi-pass
-   rendering with G-buffer outlines and palette quantization, in a browser, over hundreds of slimes.
-   Neither half is exotic; running both at once with no install is the risk.
+3. **Two real-time budgets on the same frame.** A server-authoritative world of many slimes is a
+   known engineering job, and so is a stylised 3D renderer. The risk is carrying both at once, in a
+   browser, with no install — and the failure mode is the one that only shows up under a real crowd,
+   long after it looks fine in testing.
 4. **Moderation and politics.** Elective hierarchy invites griefers seeking command, vote brigading,
    alt accounts, and a leader who logs off mid-siege out of spite. Games with player-run power
    structures reliably spend more on this than on gameplay, and it is not currently budgeted.
