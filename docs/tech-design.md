@@ -53,13 +53,17 @@ The handful of rules that shape everything else:
   state, and a new snapshot replaces an unsent one — a client that stalls resumes at the current
   world rather than replaying stale ones. Control frames travel a separate reliable lane and are
   never dropped.
-- **A section is the unit of visibility and of encoding.** A *tile* is one slime's space; a
-  *section* is the n×n block of tiles that forms one map. A connection subscribes to one section,
-  and world state is encoded once per faction per active section — every connection of that faction
-  watching that section is handed the same bytes. Encoding therefore scales with how much world is
-  live, not with how many players are connected. Fog is a faction property, so the faction is the
-  boundary the server enforces; a narrower per-slime view range is rendered client-side.
-  Subscriptions change only at tick boundaries, so dispatch iterates a set nobody is writing to.
+- **Line of sight is the visibility boundary, and the wire enforces it.** A *tile* is one slime's
+  space; a *section* is the n×n block of tiles that forms one map. A slime sees a radius of tiles
+  around the one it stands on, and a commander sees the union of their team's. Every frame is culled
+  to the recipient's own set and encoded per connection: bytes describing something a client cannot
+  see are never put on its socket, so a modified client gains nothing. Culling per connection rather
+  than sharing one encoded frame costs well under a millisecond per tick at a few hundred
+  connections, which is not a trade worth making against cheating.
+- **What leaves line of sight stops being sent.** Slime positions ride the absolute state slot.
+  Environment and building changes ride the reliable lane, and only when they occur inside the
+  recipient's line of sight. Nothing announces a departure — an entity simply stops appearing, and
+  the client keeps its own last-known picture of what it has seen.
 - **Authority comes from the socket, not the frame.** No inbound frame carries an actor id, so there
   is no such thing as a message that acts on someone else's slime.
 - **`RealtimeProtocol.cs` and `frontend/src/realtime/protocol.ts` are one contract with no compiler
