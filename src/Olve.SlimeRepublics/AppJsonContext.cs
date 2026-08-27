@@ -2,7 +2,6 @@ using System.Text.Json.Serialization;
 using Olve.Results;
 using Olve.SlimeRepublics.Configuration;
 using Olve.SlimeRepublics.Messages;
-using Olve.SlimeRepublics.Realtime;
 using Olve.Utilities.Ids;
 using Olve.Utilities.Paginations;
 
@@ -21,10 +20,6 @@ namespace Olve.SlimeRepublics;
 [JsonSerializable(typeof(Result))]
 [JsonSerializable(typeof(Result<Message>))]
 [JsonSerializable(typeof(Result<Page<Message>>))]
-// The realtime handshake ticket — the one JSON payload in the realtime slice. Everything after
-// the upgrade is binary and never touches this context (see Realtime/RealtimeProtocol.cs).
-[JsonSerializable(typeof(RealtimeTicketResponse))]
-[JsonSerializable(typeof(Result<RealtimeTicketResponse>))]
 // Public OIDC config served to the SPA at GET /api/auth-config.
 [JsonSerializable(typeof(FrontendAuthConfig))]
 internal partial class AppJsonContext : JsonSerializerContext;

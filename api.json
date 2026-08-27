@@ -225,39 +225,6 @@
           }
         }
       }
-    },
-    "/api/realtime/ticket": {
-      "post": {
-        "tags": [
-          "Olve.SlimeRepublics"
-        ],
-        "operationId": "CreateRealtimeTicket",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RealtimeTicketResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ResultProblem"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -398,35 +365,6 @@
               "string"
             ],
             "format": "int32"
-          }
-        }
-      },
-      "RealtimeTicketResponse": {
-        "required": [
-          "ticket",
-          "expiresInSeconds",
-          "sessionExpiresAtUnixSeconds"
-        ],
-        "type": "object",
-        "properties": {
-          "ticket": {
-            "type": "string"
-          },
-          "expiresInSeconds": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "sessionExpiresAtUnixSeconds": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64"
           }
         }
       },

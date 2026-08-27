@@ -1,7 +1,6 @@
 using Olve.SlimeRepublics.Configuration;
 using Olve.SlimeRepublics.Health;
 using Olve.SlimeRepublics.Messages;
-using Olve.SlimeRepublics.Realtime;
 using Olve.Utilities.AsyncOnStartup;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -11,7 +10,6 @@ builder.ConfigureJson();
 builder.ConfigureAuthentication();
 builder.ConfigureTelemetry();
 builder.Services.AddMessageServices(builder.Configuration);
-builder.Services.AddRealtimeServices(builder.Configuration);
 
 var app = builder.Build();
 
@@ -22,12 +20,6 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Must precede the realtime endpoint: this is the middleware that turns a request carrying the
-// Upgrade header into an AcceptWebSocketAsync-able context. KeepAliveInterval is the protocol-level
-// ping Kestrel sends on an otherwise idle socket; the application heartbeat in RealtimeConnection is
-// separate and exists to detect a peer that is connected but no longer responding.
-app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });
-
 app.MapJson();
 app.MapAuthentication();
 app.MapHealthEndpoints();
@@ -36,11 +28,6 @@ app.MapHealthEndpoints();
 var api = app.MapGroup("/api");
 api.MapMessageEndpoints();
 api.MapFrontendConfig();
-api.MapRealtimeTicketEndpoint();
-
-// The socket lives at the site root, not under /api — it is not a JSON API and is not described
-// by api.json. Mapping it explicitly also keeps it clear of MapFallbackToFile below.
-app.MapRealtimeEndpoint();
 
 // SPA client-side routing: any unmatched non-API GET returns index.html so deep links work.
 app.MapFallbackToFile("index.html").AllowAnonymous();

@@ -56,40 +56,12 @@ public class AppFixture : IAsyncInitializer, IAsyncDisposable
     public HttpClient CreateUnauthenticatedHttpClient() =>
         new() { BaseAddress = new Uri(_baseUrl) };
 
-    /// <summary>
-    /// A raw authenticated client, for endpoints exercised below the generated client — the
-    /// realtime handshake in particular, where the point is the exact HTTP/WebSocket sequence.
-    /// </summary>
-    /// <param name="tokenLifetime">
-    /// Overrides the bearer's lifetime. The realtime tests use a short one to reach the
-    /// session-expiry behaviour without waiting minutes for it.
-    /// </param>
-    public HttpClient CreateAuthenticatedHttpClient(TimeSpan? tokenLifetime = null)
-    {
-        var client = new HttpClient { BaseAddress = new Uri(_baseUrl) };
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", GenerateJwt(tokenLifetime));
-        return client;
-    }
-
-    /// <summary>The <c>ws://</c> URI of the realtime endpoint, with <paramref name="ticket"/> attached.</summary>
-    public Uri WebSocketUri(string? ticket)
-    {
-        var builder = new UriBuilder(_baseUrl) { Scheme = "ws", Path = "/ws" };
-        if (ticket is not null)
-        {
-            builder.Query = $"ticket={Uri.EscapeDataString(ticket)}";
-        }
-
-        return builder.Uri;
-    }
-
     public async ValueTask DisposeAsync()
     {
         await _container.DisposeAsync();
     }
 
-    private static string GenerateJwt(TimeSpan? lifetime = null)
+    private static string GenerateJwt()
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SigningKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -98,7 +70,7 @@ public class AppFixture : IAsyncInitializer, IAsyncDisposable
         {
             Issuer = Issuer,
             Audience = Audience,
-            Expires = DateTime.UtcNow.Add(lifetime ?? TimeSpan.FromMinutes(5)),
+            Expires = DateTime.UtcNow.AddMinutes(5),
             SigningCredentials = credentials,
             Subject = new ClaimsIdentity([new Claim(ClaimTypes.Name, "test-user")]),
         };

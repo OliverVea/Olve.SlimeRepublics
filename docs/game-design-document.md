@@ -70,7 +70,8 @@ The layers should get progressively more demanding in what to pay attention to. 
 Nobody is required to climb. A player who never leaves layer 1 should have a complete game — and so
 should a *faction* where nobody has. Five slimes with no commander and no leadership is a functioning
 faction playing a real game, just an unamplified one. Seats then open as the faction can afford them, because
-**a seat costs a slime**: the player in the chair is a player not on the ground, and the seat has to
+**a seat costs a slime**, and it costs one *literally*: you occupy exactly one layer at a time, so the
+player in the chair is a body pulled off the ground, not a body plus a seat. The seat therefore has to
 amplify more than that body would have contributed. A commander over a handful of slimes clears that
 bar early. A full-time layer 3 over four slimes does not — it is a fifth of the faction spent on
 directing twelve people's war.
@@ -89,7 +90,9 @@ Broadly **teen-and-up (ESRB T)**: cartoon violence, no gore, no realistic weapon
 Hierarchical strategy games are usually one player operating a stack of menus. Here each tier of the
 hierarchy is a different human, playing live, at their own clock speed — seconds at layer 1, tens of
 seconds at layer 2, hours and days at layer 3. A slime can look up and see the front line their
-commander is arguing about; a general can watch their decision land as slimes flood a section.
+commander is arguing about; a general can watch their decision land as slimes flood a sector. This
+vertical connection — a decision made at one altitude and *felt* at another, with a real person on
+each end — is the game's core; everything else here is substrate for it.
 
 **2. Cozy, and playing small is a fair way to play.** You can mine, build, and mind your own
 business — alone, quietly, contributing a little — and that is a legitimate way to play this game
@@ -106,10 +109,12 @@ whole game able to arrive at any moment.
 no raid times, no scheduling, and nothing you have to be present for. You drop in, do a thing, and
 drop out, at any layer.
 
-Making that true above layer 1 is a structural commitment: **seats survive absence**. A commander who
-closes the tab hands off down a deputy chain rather than leaving twenty people stranded, and the
-world keeps functioning as well as it reasonably can. Losing your leadership for a while must never be
-a death sentence.
+Making that true above layer 1 is a structural commitment, though not the one it first looks like:
+seats are **not held** for an absent leader. A commander who vanishes instantly vacates the chair —
+which is exactly what stops twenty people being stranded, because the seat reopens at once and anyone
+present can take it. On return you re-enter at the highest seat still open to you, down to your own
+slime. What survives absence is the *world*, never your personal grip on a chair; and losing one is
+not a death sentence, because merit persists across the seat and re-contesting it is cheap.
 
 Which sets the central balance problem this design has to solve: **leadership amplifies, it never
 gates.** Leaders have to be genuinely worth having, or layers 2 and 3 are decoration — and layer 1 has
@@ -123,8 +128,14 @@ bed. Both halves have to be true at once, and tuning that is real work rather th
   visually distinct in chat and nothing more; no broadcast channel, no compulsory objective, no
   mechanical weight behind their words. Their real power is the faucet: bounties, buffs, and where
   the world is open. Ignoring a commander is an ordinary thing to do, not a betrayal — which is what
-  keeps minding your own business a fair way to play.
-- **Elective hierarchy and player-authored culture.** Seats are climbed to and lost. Factions name
+  keeps minding your own business a fair way to play. This is the game's single spine, and it repeats
+  at every rung: a leader cannot order a commander any more than a commander can order a slime. Each
+  layer sets the intent and opens the faucet; the layer below owns the doing, and self-selects onto the
+  plans worth executing.
+- **Elective hierarchy and player-authored culture.** Seats are climbed to and lost. The mechanism
+  that fills them is deliberately minimal — a lightweight, event-driven election kept out of the way,
+  because the point is who leads and what they do for the people below them, never the ceremony of
+  choosing. Factions name
   their own ranks and invent their own politics; the developers lean into whatever meaning the
   player base assigns each color rather than authoring it up front. <Ideally, I want fan art giving the factions personalities. This is why I suggested Blue, Black, and Pink. I think all have different inherent symbolism so hopefully the players pick up on that and make it their own.>
 - **Three factions, all playing to win.** No consolation for second, no leverage in being third, no
@@ -147,16 +158,20 @@ bed. Both halves have to be true at once, and tuning that is real work rather th
 
 > *Who is the player? What is the setting? What is the fantasy the game grants the player? What emotions do you want the player to feel? What keeps the player engaged for the duration of their play?*
 
-**Who the player is** depends on which layer they are standing on. (Whether a player occupies exactly
-one layer at a time, or can drop back down to fight while holding a seat, is unsettled — see the open
-questions under Detailed & Game Systems Design.)
+**Who the player is** depends on which layer they are standing on — and you stand on exactly one at a
+time. Holding a seat means *being* that layer for the session: your slime leaves the ground while you
+lead, which is what makes "a seat costs a slime" literal.
 
 - **Layer 1 — the slime.** Isometric, one body, one color. You fight other factions' slimes over
-  resources, haul what you win, raise buildings your faction depends on, and upgrade yourself. Death
-  is comic and cheap: you splatter, you wobble back together fifteen seconds later. Your real
-  investment is your upgrades and your merit, never your body.
-- **Layer 2 — the commander.** Roughly twenty slimes, seen from above. You can scroll around the map and see what your slimes and buildings reveal. You have a resource pool that ticks in, bounties to place, and cooldown-gated interventions. You can communicate to your slimes and set visual waypoints and markers — addressed to the whole team or to an individual slime — but you cannot force anyone to do anything. You have the best tactical overview of the game, with layer 1's view too narrow and layer 3's view too aggregated and broad.
-- **Layer 3 — the leadership.** The region containing every active map. You choose which sections will support your slimes, strategize to increase your factions resource harvesting potential, order the construction of large-scale buildings such as tunnels that warp slimes across the world, continuously reallocate a fixed pool of regional buffs, negotiate with the other two factions' leaderships.
+  resources, haul what you win, raise buildings your faction depends on, and upgrade yourself by
+  gathering the world's materials. Upgrading is a committed, vulnerable act rather than a menu click,
+  so it is something you do in held ground or under a squad's guard, and its returns diminish as costs
+  climb — a veteran slime is better but never untouchable, and six fresh slimes over the hill are still
+  a real threat. Death is comic and cheap: you splatter, you wobble back together fifteen seconds
+  later. Your upgrades survive that; your real investment is your upgrades and your merit, never your
+  body — though the upgrades reset with the season and the person is what carries over.
+- **Layer 2 — the commander.** A sector seen from above, and command is **co-location**: you project your kit into the sector you are standing in and command a subset of your faction's slimes there — those who choose to take your orders and buffs. You do not own a fixed roster — your following is however many of your faction's slimes are in the sector and picked you, so it swells on a hot front and thins in a quiet corner. You can communicate, set visual waypoints and markers, place bounties, and spend cooldown-gated buffs to make following worthwhile — but you cannot force anyone, and moving to another sector leaves the slimes behind out of reach while you lead whoever is *there* instead. You have the best tactical overview of the game; layer 1's view is too narrow and layer 3's view too aggregated and broad.
+- **Layer 3 — the leadership.** The region containing every active map. You choose which sectors to open and release — the ground your slimes and commanders can move into — strategize to increase your factions resource harvesting potential, order the construction of large-scale buildings such as tunnels that warp slimes across the world, continuously reallocate a fixed pool of regional buffs, negotiate with the other two factions' leaderships.
 
 **The fantasy** is *being part of something with a shape* but also *something that can be torn down without sustained team work*. Most MMOs grant power fantasy; this one grants **position** — the feeling that there are people above you making decisions you can feel, and that you could be one of them, and that they had to earn it from people like you.
 
@@ -179,7 +194,7 @@ questions under Detailed & Game Systems Design.)
 **A real-time 3D world under a pixelated 2D UI.** Chunky low-poly geometry with a stylised shader pass — cute, slightly violent, and the same look at every layer. No stylistic break between the slime's-eye view and the war table: layer 3's map is literally the same world layer 1 walks on, seen from further out.
 
 Slimes are rounded, bouncy, viscous cubes jumping around. What changes with rank is the camera's
-*distance*, never the art and never the angle — near the slime at layer 1, pulled back over a section
+*distance*, never the art and never the angle — near the slime at layer 1, pulled back over a sector
 at layer 2, high over the world at layer 3. **The camera is isometric and does not rotate.** That
 constrains the world's architecture — buildings and the monument have to stay low-profile enough not
 to hide slimes behind them, because occlusion is what creates the demand for a rotating camera in the
@@ -205,11 +220,14 @@ Audio: chunky, wet, and low-fi. Squelch, plop, and a bass thud for a comet. The 
 
 There is deliberately **very little authored fiction**, and that is the design.
 
-What the player is told: a **tile** is one slime's space; a **section** is a block of tiles, and the
-unit leadership opens or closes; a **world** is the set of sections that forms one board, and is
+What the player is told: a **tile** is one slime's space; a **sector** is a block of tiles, which the
+leadership opens and releases so its slimes and commanders can move into it; a **world** is the set of
+sectors that forms one board, and is
 roughly rectangular. What a world *is* in fiction — a continent, an island, a planet — is undecided
-and deliberately unwritten, as is whether anything sits above it. Three slime factions — **blue, black, and pink** — contest it. At the center stands a monument that will answer to whichever faction feeds it
-enough. Comets fall carrying rare material. That's roughly it.
+and deliberately unwritten, as is whether anything sits above it. Three slime factions — **blue, black, and pink** — contest it. The world's materials are themselves
+slime, drawn from what the land holds — gold slime from minerals, grey from rock, green from trees — so
+gathering is slimes rendering the world into more slime. At the center stands a monument that will
+answer to whichever faction feeds it enough. Comets fall carrying rare material. That's roughly it.
 
 Everything else is written by the players. Each faction gets a renameable banner, a faction name, and
 editable title strings for its three ranks. What blue *stands for* is not in this document and will
@@ -277,8 +295,9 @@ order, is not decided here.
    different ranks. A thin population is therefore a thin *game*, even though it is a playable one:
    layer 1 alone works and a seat is always open, so the floor degrades rather than breaks. The risk
    is not a broken early build — it is a build that works and looks unremarkable, because everything
-   that makes it worth playing needs a crowd to appear. Where the threshold sits depends on layer
-   sizing, which is not settled.
+   that makes it worth playing needs a crowd to appear. Co-location means a commander's span floats
+   with how many slimes are on their front, so the design degrades smoothly rather than snapping at a
+   fixed headcount — but where the crowd has to be to feel *full* is still an open empirical question.
 2. **The core bet is untested and hard to test.** The design assumes commanding real humans is fun
    *and* that being commanded feels good rather than like being someone's unit. Neither half can be
    validated with bots or alone — only by putting real people on both sides of a seat. Everything
@@ -293,23 +312,23 @@ order, is not decided here.
 
 ## Detailed & Game Systems Design
 
-> **Not yet drafted.** The source material covers much of this — section activation and the influence
+> **Not yet drafted.** The source material covers much of this — sector activation and the influence
 > pool, comets and prediction cones, the monument haul, merit and promotion, upkeep and anti-snowball,
 > seasons and what survives a reset. It is deliberately deferred to a later pass rather than being
 > half-specified here.
 >
 > **Open questions to settle first:**
 >
-> - **Layer sizing.** The inception discussion leaves 20:1 (a fixed *ratio*, so manager counts float
->   with population) unreconciled against fixed *seat counts* per faction (so population advantage
->   converts into management dilution instead of raw dominance). Nearly every system below depends on
->   which one is true.
 > - **Zoom between layers.** Grid-snapped *translation* is a solved problem and rotation is a known
 >   dead end, but zoom is neither. A small number of discrete stops — one fixed pixel grid per layer —
 >   is the safe version; continuous zoom may be as intractable as rotation. Untested.
-> - **Layer occupancy.** Whether holding a layer 2 or 3 seat means you *are* that layer for the
->   session, or whether you can drop back down to your slime while your seat idles, was never settled.
->   It determines what handover, deputies, and logout mean.
+>
+> Two of the three original questions here are now settled and moved into the body above. **Layer
+> sizing** is resolved by co-location (Product Design → Player Experience, layer 2): a commander's span
+> is simply who is in their sector and chose them, so it floats with geography and there is no ratio or
+> seat count to tune. **Layer occupancy** is resolved to one layer at a time (Product Design → Player
+> Experience, "Who the player is"): holding a seat pulls your slime off the ground, which is what makes
+> "a seat costs a slime" literal.
 
 ### Core Loops
 

@@ -30,11 +30,9 @@ remaining layout choice put together is ~2×.
 
 **`List()` keeps its snapshot semantics, and that is the real trade — not exceptions.** The
 lock-free enumerator is a *live view*: enumerating 100 entries while inserting produced 117
-iterations in a test. A frame encoded through it can mix old and new state. `List()` takes all locks
+iterations in a test. A read encoded through it can mix old and new state. `List()` takes all locks
 and gives a true point-in-time copy, which is what an HTTP-edited durable store wants. Document
-`Enumerate()` as unsafe-for-consistency, for callers that know no writer is active. `SlimeWorld`
-qualifies by construction: one mutator thread, commands drained at the top of the tick, nothing
-writing during encode.
+`Enumerate()` as unsafe-for-consistency, for callers that know no writer is active.
 
 ### Rejected: storage strategies selected at DI registration
 
@@ -47,38 +45,31 @@ writing during encode.
    `InvalidOperationException` immediately, both cross-thread and same-thread.
 4. **Columns are not reachable through the interface anyway.** `List() : IReadOnlyList<T>` and
    `TryGet(out T)` mandate one `T` per entity. No backing-store swap changes that — it needs a
-   different interface, which is why `SlimeWorld` implements `IEntityStore` for persistence and
-   admin while the tick loop reads its columns directly.
+   different interface. A hot read path that wants columns reads them directly, off the interface.
 
 ---
 
-## Land `ShortId<T>` in the world
+## Land `ShortId<T>`
 
-**Status:** library side done and unmerged; app side not started.
+**Status:** library side done and unmerged; app side awaits the game-state redesign.
 
 1. Merge [PR #74](https://github.com/OliverVea/Olve.Utilities/pull/74) — **rebase, no merge commit**
    per that repo's conventions. `feat:` bumps 0.48.0 → 0.49.0 and publishes all eleven packages.
 2. Bump the five `Olve.*` pins in `Directory.Packages.props`.
-3. Have `SlimeWorld` implement `IEntityStore<Slime, ShortId<Slime>>` over parallel arrays with a
-   monotonic `uint` counter. Keep the tick loop on the columns, off the interface.
 
-`ShortId<T>` is four bytes, matching `RealtimeProtocol.SnapshotEntrySize`'s `uint32` id field, so the
-wire format does not change. Ids must never be recycled — reuse aliases a stale client reference
-onto a new slime.
+`ShortId<T>` is a compact four-byte identifier — the intended id type for game entities once the
+world model is designed. Ids must never be recycled — reuse aliases a stale reference onto a new
+entity.
 
 ---
 
 ## Documentation loose ends
 
-- **`docs/REALTIME.md` is quarantined.** Oliver's notice at the top says it is unreviewed and must be
-  aligned on section by section. Nothing else cites it any more. Its 20 Hz statements are the last
-  ones in the repo.
-- **CLAUDE.md now carries no protocol summary.** Intended, but a fresh session touching `Realtime/`
-  gets no warning about the ticket handshake or close codes.
-- **The Game client is drawn but does not exist.** `tech-design.md:35` and the architecture SVG both
-  claim three.js and a separate Vite entry point. Neither is real: one `index.html`, no
-  `build.rollupOptions.input`, and the only runtime deps are the six Kiota packages. Mark both
-  planned, or cut both. They are a matched pair.
+- **The Game client is drawn but does not exist.** The tech-design components table and the
+  architecture SVG both describe three.js and a separate Vite entry point. Neither is real yet: one
+  `index.html`, no `build.rollupOptions.input`, and the only runtime deps are the six Kiota packages.
+  Both are kept as *planned* — the chosen renderer and bundle shape — not as anything that ships
+  today.
 - **`game-design-document.md:195`** still says "2D pixel sprites throughout. No 3D", contradicting
   the 3D-world restatement at `:130`. The effort estimates under it were costed against 2D.
 - **`game-design-document.md:219`** still says "sharding by zone", which the one-game-server /

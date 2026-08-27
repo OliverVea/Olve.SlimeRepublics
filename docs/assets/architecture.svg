@@ -1,9 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 570" width="900" height="570" font-family="ui-sans-serif,-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 486" width="900" height="486" font-family="ui-sans-serif,-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
   <style>
     .bg    { fill: #ffffff; }
     .outer { fill: #f6f8fa; stroke: #afb8c1; }
     .inner { fill: #ffffff; stroke: #afb8c1; }
-    .hot   { fill: #fff8e6; stroke: #d4a72c; }
     .dur   { fill: #eef6ff; stroke: #54aeff; }
     .strip { fill: #eaeef2; stroke: #afb8c1; }
     .t     { fill: #1f2328; }
@@ -13,7 +12,6 @@
       .bg    { fill: #0d1117; }
       .outer { fill: #161b22; stroke: #3d444d; }
       .inner { fill: #0d1117; stroke: #3d444d; }
-      .hot   { fill: #2b2417; stroke: #d4a72c; }
       .dur   { fill: #121d2f; stroke: #316dca; }
       .strip { fill: #21262d; stroke: #3d444d; }
       .t     { fill: #e6edf3; }
@@ -26,7 +24,7 @@
       <path d="M0,0 L10,5 L0,10 z" class="dim"/>
     </marker>
   </defs>
-  <rect class="bg" width="900" height="570"/>
+  <rect class="bg" width="900" height="486"/>
 
   <!-- browser -->
   <rect class="outer" x="40" y="18" width="820" height="94" rx="8"/>
@@ -39,45 +37,32 @@
   <text class="dim" x="476" y="87" font-size="12">three.js · separate Vite entry point</text>
 
   <!-- surfaces -->
-  <line class="ln" x1="150" y1="112" x2="150" y2="186" marker-end="url(#a)"/>
-  <text class="t"   x="160" y="140" font-size="12" font-weight="600">GET /</text>
-  <text class="dim" x="160" y="156" font-size="11">static · anonymous</text>
-  <line class="ln" x1="430" y1="112" x2="430" y2="186" marker-end="url(#a)"/>
-  <text class="t"   x="440" y="140" font-size="12" font-weight="600">/api/*</text>
-  <text class="dim" x="440" y="156" font-size="11">JSON · JWT bearer</text>
-  <line class="ln" x1="720" y1="112" x2="720" y2="186" marker-end="url(#a)"/>
-  <text class="t"   x="730" y="140" font-size="12" font-weight="600">/ws</text>
-  <text class="dim" x="730" y="156" font-size="11">binary · ticket</text>
+  <line class="ln" x1="300" y1="112" x2="300" y2="186" marker-end="url(#a)"/>
+  <text class="t"   x="310" y="140" font-size="12" font-weight="600">GET /</text>
+  <text class="dim" x="310" y="156" font-size="11">static · anonymous</text>
+  <line class="ln" x1="600" y1="112" x2="600" y2="186" marker-end="url(#a)"/>
+  <text class="t"   x="610" y="140" font-size="12" font-weight="600">/api/*</text>
+  <text class="dim" x="610" y="156" font-size="11">JSON · JWT bearer</text>
 
   <!-- server -->
-  <rect class="outer" x="40" y="188" width="820" height="300" rx="8"/>
+  <rect class="outer" x="40" y="188" width="820" height="212" rx="8"/>
   <text class="dim" x="58" y="211" font-size="13" font-weight="600">Game server — one process, one pod, one world</text>
   <rect class="strip" x="62" y="222" width="776" height="30" rx="5"/>
   <text class="dim" x="78" y="242" font-size="12">Kestrel · single listener</text>
 
-  <rect class="inner" x="62" y="266" width="376" height="72" rx="6"/>
-  <text class="t"   x="78" y="288" font-size="13" font-weight="600">HTTP surface</text>
-  <text class="dim" x="78" y="307" font-size="12">auth · OpenAPI · CRUD</text>
-  <text class="dim" x="78" y="324" font-size="12">issues the realtime ticket</text>
+  <rect class="inner" x="62" y="270" width="376" height="98" rx="6"/>
+  <text class="t"   x="78" y="294" font-size="13" font-weight="600">HTTP surface</text>
+  <text class="dim" x="78" y="314" font-size="12">auth · OpenAPI · CRUD</text>
+  <text class="dim" x="78" y="331" font-size="12">serves the SPA bundle + JSON API</text>
+  <text class="dim" x="78" y="354" font-size="12" font-style="italic">live-world transport — TBD (redesign)</text>
 
-  <rect class="inner" x="462" y="266" width="376" height="72" rx="6"/>
-  <text class="t"   x="478" y="288" font-size="13" font-weight="600">Realtime surface</text>
-  <text class="dim" x="478" y="307" font-size="12">connection hub · per-socket send pump</text>
-  <text class="dim" x="478" y="324" font-size="12">fixed-rate tick loop</text>
+  <rect class="dur" x="462" y="270" width="376" height="98" rx="6"/>
+  <text class="t"   x="478" y="294" font-size="13" font-weight="600">EntityStore&lt;T&gt; — durable state</text>
+  <text class="dim" x="478" y="314" font-size="12">whole-snapshot persister</text>
+  <text class="dim" x="478" y="331" font-size="12">debounced save · flushed on shutdown</text>
+  <text class="dim" x="478" y="354" font-size="12" font-style="italic">survives restarts</text>
 
-  <rect class="hot" x="62" y="368" width="376" height="98" rx="6"/>
-  <text class="t"   x="78" y="392" font-size="13" font-weight="600">SlimeWorld — hot state</text>
-  <text class="dim" x="78" y="412" font-size="12">in memory · one mutator thread</text>
-  <text class="dim" x="78" y="429" font-size="12">never persisted</text>
-  <text class="dim" x="78" y="452" font-size="12" font-style="italic">lost on restart, by design</text>
-
-  <rect class="dur" x="462" y="368" width="376" height="98" rx="6"/>
-  <text class="t"   x="478" y="392" font-size="13" font-weight="600">EntityStore&lt;T&gt; — durable state</text>
-  <text class="dim" x="478" y="412" font-size="12">whole-snapshot persister</text>
-  <text class="dim" x="478" y="429" font-size="12">debounced save · flushed on shutdown</text>
-  <text class="dim" x="478" y="452" font-size="12" font-style="italic">survives restarts</text>
-
-  <line class="ln" x1="650" y1="466" x2="650" y2="516" marker-end="url(#a)"/>
-  <rect class="inner" x="556" y="518" width="188" height="34" rx="6"/>
-  <text class="dim" x="572" y="540" font-size="12">snapshot file / volume</text>
+  <line class="ln" x1="650" y1="400" x2="650" y2="430" marker-end="url(#a)"/>
+  <rect class="inner" x="556" y="432" width="188" height="34" rx="6"/>
+  <text class="dim" x="572" y="454" font-size="12">snapshot file / volume</text>
 </svg>
