@@ -1,0 +1,33 @@
+namespace SlimeRepublics;
+
+struct Vec2 {
+  x: float;
+  y: float;
+}
+
+table Slime {
+  id: uint;
+  position: Vec2;
+}
+
+table StrikeEvent {
+  attacker_id: uint;
+  target_id: uint;
+  damage_dealt: int;
+  is_crit: bool;
+}
+
+table DeathEvent {
+  victim_id: uint;
+}
+
+union EventData { StrikeEvent, DeathEvent }
+
+table NetworkEvent {
+  data: EventData;
+}
+
+table WorldState {
+  slimes: [ Slime ];
+  events: [ NetworkEvent ];
+}
