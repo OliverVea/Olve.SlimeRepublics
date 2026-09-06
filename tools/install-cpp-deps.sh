@@ -1,54 +1,50 @@
 #!/usr/bin/env bash
-# Installs everything `g++ -O3 main.cpp -luSockets -lz -luv -o server` needs.
+# Host toolchain + vcpkg bootstrap for src/backend-cpp.
 #
-#   flatc                -> ~/.local/bin              (schema compiler)
-#   flatbuffers/*.h      -> /usr/local/include        (header-only runtime)
-#   uWebSockets/*.h      -> /usr/local/include
-#   libusockets.h        -> /usr/local/include
-#   libuSockets.a        -> /usr/local/lib
-#   libuv, zlib          -> apt
+# Everything the server actually links comes from src/backend-cpp/vcpkg.json,
+# pinned by its builtin-baseline. This script only installs what vcpkg cannot
+# provide for itself: the compiler toolchain, CMake/Ninja, and the autotools
+# that libsodium's build requires on the host.
 #
-# Versions are pinned. flatc must match the C++ headers (generated code
-# static_asserts on it) and the `flatbuffers` npm package in src/frontend.
+# g++-14 is explicit: Ubuntu 24.04's default g++-13 ships libstdc++ 13, which
+# has no std::ranges::to. CMakePresets.json pins the compiler to match.
 set -euo pipefail
 
-FLATBUFFERS_VERSION=25.9.23
-UWEBSOCKETS_VERSION=20.80.0
+VCPKG_DIR="${VCPKG_ROOT:-$HOME/vcpkg}"
+FLATC_VERSION=25.9.23   # must match src/frontend/package.json; see src/schema/generate.sh
 
-work="$(mktemp -d)"
-trap 'rm -rf "$work"' EXIT
-
-echo "==> apt packages"
+echo "==> host packages"
 sudo apt-get update -qq
-sudo apt-get install -y -qq build-essential git unzip curl libuv1-dev zlib1g-dev
+sudo apt-get install -y -qq \
+  build-essential g++-14 git curl zip unzip tar pkg-config \
+  cmake ninja-build \
+  autoconf autoconf-archive automake libtool m4   # libsodium builds with autotools
 
-echo "==> flatc $FLATBUFFERS_VERSION"
+# The C++ FlatBuffers code is generated at build time by vcpkg's flatc. This
+# one is for the TypeScript client only: it must match the `flatbuffers` npm
+# package, which lags the C++ releases. See src/schema/generate.sh.
+echo "==> flatc $FLATC_VERSION (TypeScript codegen only)"
+work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 curl -fsSL -o "$work/flatc.zip" \
-  "https://github.com/google/flatbuffers/releases/download/v$FLATBUFFERS_VERSION/Linux.flatc.binary.g%2B%2B-13.zip"
+  "https://github.com/google/flatbuffers/releases/download/v$FLATC_VERSION/Linux.flatc.binary.g%2B%2B-13.zip"
 unzip -oq "$work/flatc.zip" -d "$work"
 install -d "$HOME/.local/bin"
 install -m755 "$work/flatc" "$HOME/.local/bin/flatc"
 
-echo "==> flatbuffers headers $FLATBUFFERS_VERSION"
-curl -fsSL -o "$work/fb.tar.gz" \
-  "https://github.com/google/flatbuffers/archive/refs/tags/v$FLATBUFFERS_VERSION.tar.gz"
-tar xzf "$work/fb.tar.gz" -C "$work"
-sudo rm -rf /usr/local/include/flatbuffers
-sudo cp -r "$work/flatbuffers-$FLATBUFFERS_VERSION/include/flatbuffers" /usr/local/include/flatbuffers
+echo "==> vcpkg -> $VCPKG_DIR"
+if [ ! -d "$VCPKG_DIR" ]; then
+  git clone --filter=blob:none https://github.com/microsoft/vcpkg.git "$VCPKG_DIR"
+fi
+"$VCPKG_DIR/bootstrap-vcpkg.sh" -disableMetrics
 
-echo "==> uWebSockets $UWEBSOCKETS_VERSION"
-git clone -q --branch "v$UWEBSOCKETS_VERSION" --depth 1 --recurse-submodules \
-  https://github.com/uNetworking/uWebSockets.git "$work/uws"
-# libuv event loop, no SSL — TLS is terminated at the ingress, not here.
-make -C "$work/uws/uSockets" WITH_LIBUV=1 >/dev/null
-sudo install -m644 "$work/uws/uSockets/uSockets.a" /usr/local/lib/libuSockets.a
-sudo install -m644 "$work/uws/uSockets/src/libusockets.h" /usr/local/include/libusockets.h
-sudo rm -rf /usr/local/include/uWebSockets
-sudo install -d /usr/local/include/uWebSockets
-sudo cp "$work/uws"/src/*.h /usr/local/include/uWebSockets/
-sudo ldconfig
+cat <<MSG
 
-echo
-echo "done. flatc: $("$HOME/.local/bin/flatc" --version)"
-echo "build the server with:"
-echo "  cd src/backend-cpp && g++ -O3 main.cpp -luSockets -lz -luv -o server"
+Done. Build with:
+
+    cd src/backend-cpp
+    cmake --preset debug     # first run installs the vcpkg dependencies
+    cmake --build build
+
+The presets expect vcpkg at \$HOME/vcpkg. If yours lives elsewhere, override
+CMAKE_TOOLCHAIN_FILE or move it.
+MSG

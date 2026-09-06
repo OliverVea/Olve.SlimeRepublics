@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Olve.SlimeRepublics — world</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        font: 14px/1.5 system-ui, sans-serif;
+        background: #0b0d12;
+        color: #c9d1e0;
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 1rem;
+        padding: 1.25rem;
+        box-sizing: border-box;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.5rem 1.25rem;
+      }
+      h1 {
+        font-size: 1.05rem;
+        margin: 0;
+        font-weight: 600;
+      }
+      .meta {
+        opacity: 0.65;
+      }
+      #status[data-state="open"] {
+        color: #6ee7a8;
+      }
+      #status[data-state="connecting"] {
+        color: #e7c96e;
+      }
+      #status[data-state="closed"] {
+        color: #e78d6e;
+      }
+      /* Unanswered pings colour the readout: a healthy median over a link dropping half its
+         probes is a lie, and the count alone is easy to miss. */
+      #ping[data-lost]:not([data-lost=""]) {
+        color: #e78d6e;
+      }
+      .stage {
+        display: grid;
+        place-items: center;
+        min-height: 0;
+      }
+      #world {
+        width: min(100%, 80vh);
+        aspect-ratio: 1;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>World</h1>
+      <span class="meta">20×20 tiles centered on the origin</span>
+      <span class="meta">socket: <span id="status">connecting</span></span>
+      <span class="meta">slimes: <span id="count">0</span></span>
+      <span class="meta">ping: <span id="ping">—</span></span>
+    </header>
+
+    <div class="stage"><canvas id="world"></canvas></div>
+
+    <script type="module" src="/src/game/main.ts"></script>
+  </body>
+</html>

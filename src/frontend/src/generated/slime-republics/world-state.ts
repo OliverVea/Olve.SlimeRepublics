@@ -5,7 +5,6 @@
 
 import * as flatbuffers from 'flatbuffers';
 
-import { NetworkEvent } from '../slime-republics/network-event.js';
 import { Slime } from '../slime-republics/slime.js';
 
 
@@ -37,18 +36,8 @@ slimesLength():number {
   return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
 }
 
-events(index: number, obj?:NetworkEvent):NetworkEvent|null {
-  const offset = this.bb!.__offset(this.bb_pos, 6);
-  return offset ? (obj || new NetworkEvent()).__init(this.bb!.__indirect(this.bb!.__vector(this.bb_pos + offset) + index * 4), this.bb!) : null;
-}
-
-eventsLength():number {
-  const offset = this.bb!.__offset(this.bb_pos, 6);
-  return offset ? this.bb!.__vector_len(this.bb_pos + offset) : 0;
-}
-
 static startWorldState(builder:flatbuffers.Builder) {
-  builder.startObject(2);
+  builder.startObject(1);
 }
 
 static addSlimes(builder:flatbuffers.Builder, slimesOffset:flatbuffers.Offset) {
@@ -67,31 +56,14 @@ static startSlimesVector(builder:flatbuffers.Builder, numElems:number) {
   builder.startVector(4, numElems, 4);
 }
 
-static addEvents(builder:flatbuffers.Builder, eventsOffset:flatbuffers.Offset) {
-  builder.addFieldOffset(1, eventsOffset, 0);
-}
-
-static createEventsVector(builder:flatbuffers.Builder, data:flatbuffers.Offset[]):flatbuffers.Offset {
-  builder.startVector(4, data.length, 4);
-  for (let i = data.length - 1; i >= 0; i--) {
-    builder.addOffset(data[i]!);
-  }
-  return builder.endVector();
-}
-
-static startEventsVector(builder:flatbuffers.Builder, numElems:number) {
-  builder.startVector(4, numElems, 4);
-}
-
 static endWorldState(builder:flatbuffers.Builder):flatbuffers.Offset {
   const offset = builder.endObject();
   return offset;
 }
 
-static createWorldState(builder:flatbuffers.Builder, slimesOffset:flatbuffers.Offset, eventsOffset:flatbuffers.Offset):flatbuffers.Offset {
+static createWorldState(builder:flatbuffers.Builder, slimesOffset:flatbuffers.Offset):flatbuffers.Offset {
   WorldState.startWorldState(builder);
   WorldState.addSlimes(builder, slimesOffset);
-  WorldState.addEvents(builder, eventsOffset);
   return WorldState.endWorldState(builder);
 }
 }

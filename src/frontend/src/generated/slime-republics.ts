@@ -3,10 +3,14 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
-export { DeathEvent } from './slime-republics/death-event.js';
-export { EventData } from './slime-republics/event-data.js';
-export { NetworkEvent } from './slime-republics/network-event.js';
+export { ClientEvent } from './slime-republics/client-event.js';
+export { ClientInput } from './slime-republics/client-input.js';
+export { Direction } from './slime-republics/direction.js';
+export { MoveEvent } from './slime-republics/move-event.js';
+export { PingEvent } from './slime-republics/ping-event.js';
+export { PongEvent } from './slime-republics/pong-event.js';
+export { ServerEvent } from './slime-republics/server-event.js';
+export { ServerMessage } from './slime-republics/server-message.js';
 export { Slime } from './slime-republics/slime.js';
-export { StrikeEvent } from './slime-republics/strike-event.js';
 export { Vec2 } from './slime-republics/vec2.js';
 export { WorldState } from './slime-republics/world-state.js';

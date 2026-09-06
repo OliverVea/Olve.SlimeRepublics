@@ -15,11 +15,11 @@ export class Vec2 {
 }
 
 x():number {
-  return this.bb!.readFloat32(this.bb_pos);
+  return this.bb!.readInt32(this.bb_pos);
 }
 
 y():number {
-  return this.bb!.readFloat32(this.bb_pos + 4);
+  return this.bb!.readInt32(this.bb_pos + 4);
 }
 
 static sizeOf():number {
@@ -28,8 +28,8 @@ static sizeOf():number {
 
 static createVec2(builder:flatbuffers.Builder, x: number, y: number):flatbuffers.Offset {
   builder.prep(4, 8);
-  builder.writeFloat32(y);
-  builder.writeFloat32(x);
+  builder.writeInt32(y);
+  builder.writeInt32(x);
   return builder.offset();
 }
 

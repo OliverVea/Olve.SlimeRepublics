@@ -1,33 +1,52 @@
 namespace SlimeRepublics;
 
+// ------------------------------------------------------------------ primitives
+
 struct Vec2 {
-  x: float;
-  y: float;
+  x: int;
+  y: int;
 }
+
+enum Direction : byte { Up, Down, Left, Right }
+
+// ---------------------------------------------------------------------- world
 
 table Slime {
   id: uint;
   position: Vec2;
 }
 
-table StrikeEvent {
-  attacker_id: uint;
-  target_id: uint;
-  damage_dealt: int;
-  is_crit: bool;
-}
-
-table DeathEvent {
-  victim_id: uint;
-}
-
-union EventData { StrikeEvent, DeathEvent }
-
-table NetworkEvent {
-  data: EventData;
-}
-
 table WorldState {
   slimes: [ Slime ];
-  events: [ NetworkEvent ];
 }
+
+// --------------------------------------------------------------------- events
+
+table MoveEvent {
+  direction: Direction;
+}
+
+table PingEvent {
+  origin_time: double;
+}
+
+table PongEvent {
+  origin_time: double;
+}
+
+// ------------------------------------------------------------------- envelopes
+
+union ClientEvent { MoveEvent, PingEvent, PongEvent }
+
+table ClientInput {
+  events: [ ClientEvent ];
+}
+
+union ServerEvent { WorldState, PingEvent, PongEvent }
+
+table ServerMessage {
+  events: [ ServerEvent ];
+}
+
+file_identifier "SLIM";
+root_type ServerMessage;

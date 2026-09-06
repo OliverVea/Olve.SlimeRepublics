@@ -24,13 +24,16 @@ end to end (DESIGN §2).
 ```
 frontend/
 ├─ index.html                 demo page (mounts <message-list>, optional token field)
-├─ vite.config.ts             dev server + API proxy
+├─ game.html                  game client entry (see "The game client" below)
+├─ vite.config.ts             dev server + API proxy + the two build entries
 ├─ src/
 │  ├─ main.ts                 entry: builds the client, defines the element, wires it
 │  ├─ base-element.ts         BaseElement — the explicit-render seam + escapeHtml
 │  ├─ api-client.ts           Kiota client factory (+ optional Bearer auth)
 │  ├─ components/
 │  │  └─ message-list.ts      <message-list> — the first real component (CRUD)
+│  ├─ game/                   game client: socket + wire decode + debug renderer
+│  ├─ generated/              GENERATED FlatBuffers wire types (../schema/generate.sh)
 │  └─ api/                    GENERATED Kiota client (committed; see below)
 ```
 
@@ -57,6 +60,86 @@ VITE_API_TARGET=https://olve-slimerepublics-beta.ovea.pro npm run dev
 `GET /api/messages` is anonymous, so the list loads with no auth. Creating / editing / deleting
 need a login — click **Log in** to run the OIDC flow (see below); the access token is then
 attached as a Bearer token automatically (otherwise writes return `401`).
+
+## The game client (`game.html`)
+
+A **second Vite entry**, separate from the CRUD SPA above so neither bundle carries the
+other's code. It connects to the C++ game server over a WebSocket, decodes the FlatBuffers
+`WorldState` it broadcasts at 20 Hz, and draws the slimes.
+
+```bash
+../backend-cpp/build/backend_cpp    # ws://localhost:9001
+npm run dev                         # http://localhost:5173/game.html
+```
+
+`VITE_WS_URL` overrides the socket URL (default `ws://localhost:9001`). This connection does
+**not** go through the `/api` dev proxy — it is a different port and a different protocol, and
+the proxy would buy nothing.
+
+```
+src/game/
+├─ main.ts         entry: wires the connection to the renderer
+├─ protocol.ts     bytes → { id, x, y }[]; the ONLY file here that touches src/generated/**
+├─ connection.ts   socket lifecycle, reconnect with backoff
+└─ tile-map.ts     debug renderer: a fixed 20×20 canvas grid centered on the origin
+```
+
+**`tile-map.ts` is a debug view, not the game client** DESIGN §2 describes (three.js
+`WebGPURenderer`, isometric, TSL shaders). It exists to prove the socket and the wire format
+end to end. When the real renderer lands it replaces that one file; `protocol.ts` and
+`connection.ts` are unaffected — which is why the seam is there.
+
+Two things about the server worth knowing before debugging against it:
+
+- **One socket is one slime.** The server spawns a slime on open and despawns it on close, so
+  a reconnect gets a *new* id — the client cannot reclaim its old one. `main.ts` disposes the
+  socket on HMR for the same reason; without that, every hot update leaks a slime.
+- **`WorldState.events` is always empty.** The `EventData` union in `common.fbs` currently has
+  no members and the server never encodes the vector. An empty `events` is not a decode failure.
+
+### Input and latency
+
+WASD sends a `ClientInput` per keypress carrying one `MoveEvent` (`w`→`Up`, `s`→`Down`,
+`a`→`Left`, `d`→`Right`, mapped in `KEY_DIRECTIONS` in `input.ts`). Held keys repeat on the OS
+key-repeat, which keeps the client stateless — no held-key set to fall out of sync when the
+window loses focus mid-press.
+
+The client also pings once a second. `PingEvent.origin_time` is our own `performance.now()`;
+the server echoes it back verbatim in a `PongEvent` and we compute `now - origin_time`. Both
+readings come from **one clock**, so no clock synchronisation is needed — and the value is
+meaningless to the server, which is why it must only ever echo it. Ping and Pong are in both
+unions, so the server may probe us too; `main.ts` echoes those back untouched.
+
+`LatencyTracker` reports a **median** of the last 9 samples, not a mean: on a congested link a
+single multi-second stall would drag a mean for minutes and describe a connection nobody has.
+Pings unanswered for 5 s are written off and counted, and the readout turns orange — a healthy
+median over a link dropping half its probes is a lie. Samples are discarded on disconnect,
+since they describe a socket that no longer exists.
+
+Two things a decoder on the other side has to get right:
+
+- **`Direction.Up` is `0`, which is also the field default**, and FlatBuffers omits any field
+  equal to its default. An `Up` event carries **no `direction` field at all** and readers fall
+  back to `Up`. That round-trips correctly, but treating "field absent" as an error breaks
+  exactly one of the four keys.
+- **A union vector is two parallel vectors** (`events_type` and `events`) that must match in
+  length and order, or `VerifyClientEventVector` rejects the frame outright.
+
+`src/game/protocol.test.ts` decodes a frame captured verbatim off the running server, rather
+than one built by the TypeScript encoder — so it fails if the C++ wire format drifts (a
+`Vec2` int/float change, say) without `src/generated` being regenerated.
+
+### It is dev-only today
+
+`npm run build` emits `dist/game.html`, which the root [`Dockerfile`](../../Dockerfile) copies
+into the API's `wwwroot` along with the rest of `dist/` — so a deploy would serve the page with
+`ws://localhost:9001` baked in (`VITE_WS_URL` is read at *build* time). It would not work there:
+the C++ game server is not deployed at all yet, and a `ws://` socket from an `https://` page is
+blocked as mixed content regardless. Deploying this needs three things together — the game
+server deployed, a route to it, and `VITE_WS_URL=wss://<that host>` at build time. Until then
+`/game.html` in `wwwroot` is harmless dead weight, deliberately left in rather than gated behind
+an env check in `vite.config.ts`, so that the entry point stays visible instead of silently
+absent.
 
 ## Authentication (OIDC + PKCE)
 
