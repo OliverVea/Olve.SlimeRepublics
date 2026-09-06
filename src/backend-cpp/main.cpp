@@ -8,14 +8,12 @@
 
 #include "common_generated.h"
 #include "world.h"
+#include "codec.h"
 
 namespace {
-    // Every interface, so the frontend can be opened from another device on the LAN/tailnet.
-    // The port-only listen() overload already does this, but silently — stated here so the
-    // bind address is a visible decision rather than a default nobody checked.
     constexpr const char *kHost = "0.0.0.0";
     constexpr int kPort = 9001;
-    constexpr int kTickHz = 20;
+    constexpr int kTickHz = 100;
     constexpr int kTickIntervalMs = 1000 / kTickHz;
     constexpr float kTickDt = 1.0f / static_cast<float>(kTickHz);
 
@@ -23,76 +21,15 @@ namespace {
     constexpr int kIdleTimeoutSeconds = 60;
 
     struct PerSocketData {
-        slime::SlimeId slime_id = 0;
+        SlimeId slime_id = 0;
     };
 
     using WebSocket = uWS::WebSocket<false, true, PerSocketData>;
 
-    struct Server {
-        slime::World world;
-        uWS::App *app = nullptr;
-        slime::SlimeId next_slime_id = 1;
-        flatbuffers::FlatBufferBuilder builder;
-    };
-
-    template <typename ... Ts>
-    std::string EncodeServerMessage(flatbuffers::FlatBufferBuilder &builder, flatbuffers::Offset<Ts>... offsets) {
-        static_assert(sizeof...(Ts) > 0);
-        static_assert(((SlimeRepublics::ServerEventTraits<Ts>::enum_value != SlimeRepublics::ServerEvent::NONE) && ...), "every offset must be a ServerEvent union member");
-
-        const std::vector<SlimeRepublics::ServerEvent> types { SlimeRepublics::ServerEventTraits<Ts>::enum_value... };
-        const std::vector<flatbuffers::Offset<void>> events { offsets.Union()... };
-
-        const auto to = builder.CreateVector(types);
-        const auto eo = builder.CreateVector(events);
-
-        auto mo = SlimeRepublics::CreateServerMessage(builder, to, eo);
-
-        builder.Finish(mo, SlimeRepublics::ServerMessageIdentifier());
-
-        return {
-            std::string(reinterpret_cast<const char *>(builder.GetBufferPointer()),
-                        builder.GetSize())
-        };
-    }
-
-    std::string EncodeWorldState(flatbuffers::FlatBufferBuilder &builder, const slime::World &world) {
-        builder.Clear();
-
-        std::vector<flatbuffers::Offset<SlimeRepublics::Slime> > v;
-
-        for (auto &&[id, pos]: world.GetSlimesWithPositions()) {
-            const SlimeRepublics::Vec2 vec(pos.x, pos.y);
-            v.push_back(SlimeRepublics::CreateSlime(builder, id, &vec));
-        }
-
-        const auto svo = builder.CreateVector(v);
-        const auto wso = SlimeRepublics::CreateWorldState(builder, svo);
-
-        return EncodeServerMessage(builder, wso);
-    }
-
-    std::string EncodePongEvent(flatbuffers::FlatBufferBuilder &builder, const SlimeRepublics::PingEvent& pingEvent) {
-        builder.Clear();
-
-        const auto peo = SlimeRepublics::CreatePongEvent(builder, pingEvent.origin_time());
-
-        return EncodeServerMessage(builder, peo);
-    }
-
-    void OnTick(us_timer_t *timer) {
-        Server *server = nullptr;
-        std::memcpy(&server, us_timer_ext(timer), sizeof(Server *));
-
-        server->world.Tick(kTickDt);
-        server->app->publish("world", EncodeWorldState(server->builder, server->world), uWS::OpCode::BINARY);
-    }
-
-    void OnMessage(flatbuffers::FlatBufferBuilder &builder, slime::World& world, WebSocket* ws, std::string_view message) {
+    void OnMessage(const Codec &codec, GameManager& game_manager, WebSocket* ws, std::string_view message) {
         auto *buf = reinterpret_cast<const uint8_t *>(message.data());
 
-        flatbuffers::Verifier verifier(buf, message.size());
-        if (!verifier.VerifyBuffer<SlimeRepublics::ClientInput>(nullptr)) {
+        if (flatbuffers::Verifier verifier(buf, message.size()); !verifier.VerifyBuffer<SlimeRepublics::ClientInput>(nullptr)) {
             return;
         }
 
@@ -105,12 +42,12 @@ namespace {
             switch (event_type) {
                 case SlimeRepublics::ClientEvent::MoveEvent: {
                     const auto moveEvent = static_cast<const SlimeRepublics::MoveEvent*>(raw_event);
-                    world.MoveSlime(ws->getUserData()->slime_id, moveEvent->direction());
+                    game_manager.MoveSlime(ws->getUserData()->slime_id, moveEvent->direction());
                     break;
                 }
                 case SlimeRepublics::ClientEvent::PingEvent: {
                     const auto pingEvent = static_cast<const SlimeRepublics::PingEvent*>(raw_event);
-                    ws->send(EncodePongEvent(builder, *pingEvent));
+                    ws->send(codec.Encode(*pingEvent));
                     break;
 
                 }
@@ -127,9 +64,9 @@ namespace {
 int main() {
     std::setvbuf(stdout, nullptr, _IONBF, 0);
 
-    Server server;
+    GameManager game_manager;
+    Codec codec;
     uWS::App app;
-    server.app = &app;
 
     app.addServerName("0.0.0.0");
 
@@ -140,21 +77,20 @@ int main() {
                     .maxPayloadLength = kMaxPayloadLength,
                     .idleTimeout = kIdleTimeoutSeconds,
                     .open =
-                    [&server](WebSocket *ws) {
-                        const slime::SlimeId id = server.next_slime_id++;
+                    [&game_manager](WebSocket *ws) {
+                        const SlimeId id = game_manager.GetNextSlimeId();
                         ws->getUserData()->slime_id = id;
                         ws->subscribe("world");
-                        server.world.Enqueue(slime::Spawn{id});
+                        game_manager.Enqueue(Spawn{id});
                     },
                     .message =
-                    [&server](WebSocket *ws, std::string_view message,
+                    [&game_manager, &codec](WebSocket *ws, std::string_view message,
                               uWS::OpCode) {
-                        OnMessage(server.builder, server.world, ws, message);
+                        OnMessage(codec,game_manager, ws, message);
                     },
                     .close =
-                    [&server](WebSocket *ws, int, std::string_view) {
-                        server.world.Enqueue(
-                            slime::Despawn{ws->getUserData()->slime_id});
+                    [&game_manager](WebSocket *ws, int, std::string_view) {
+                        game_manager.Enqueue(Despawn{ws->getUserData()->slime_id});
                     },
                 })
             .listen(kHost, kPort, [](const auto *token) {
@@ -165,11 +101,24 @@ int main() {
                 }
             });
 
-    Server *server_ptr = &server;
-    us_timer_t *tick = us_create_timer(
-        reinterpret_cast<us_loop_t *>(uWS::Loop::get()), 0, sizeof(Server *));
-    std::memcpy(us_timer_ext(tick), &server_ptr, sizeof(Server *));
-    us_timer_set(tick, OnTick, kTickIntervalMs, kTickIntervalMs);
+    struct TickLocals {
+        GameManager *game_manager = nullptr;
+        Codec *codec = nullptr;
+        uWS::App *app = nullptr;
+    };
+
+    const TickLocals tick_locals(&game_manager, &codec, &app);
+
+    us_timer_t *tick = us_create_timer(reinterpret_cast<us_loop_t *>(uWS::Loop::get()), 0, sizeof(TickLocals));
+    std::memcpy(us_timer_ext(tick), &tick_locals, sizeof(TickLocals));
+    us_timer_set(tick, [](us_timer_t *timer) {
+        TickLocals ctx;
+        std::memcpy(&ctx, us_timer_ext(timer), sizeof(TickLocals));
+
+        ctx.game_manager->Tick(kTickDt);
+        ctx.app->publish("world", ctx.codec->Encode(*ctx.game_manager), uWS::OpCode::BINARY);
+
+    }, kTickIntervalMs, kTickIntervalMs);
 
     std::printf("ticking at %d Hz\n", kTickHz);
     app.run();

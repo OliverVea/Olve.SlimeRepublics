@@ -24,133 +24,134 @@
 
 #include "common_generated.h"
 
-namespace slime {
-    // Stable network id. The entt::entity handle is an internal detail and may be
-    // recycled; this never is.
-    using SlimeId = std::uint32_t;
+using SlimeId = std::uint32_t;
 
-    // ---------------------------------------------------------------- components
+// ---------------------------------------------------------------- components
 
-    struct Position {
-        int x = 0, y = 0;
-    };
+struct Position {
+    int x = 0, y = 0;
+};
 
-    struct Movable {
-        float speed = 1.0f;
-        float time_until = 0.0f;
-    };
+struct Movable {
+    float speed = 1.0f;
+    float time_until = 0.0f;
+};
 
-    struct Networked {
-        SlimeId id = 0;
-    };
+struct Networked {
+    SlimeId id = 0;
+};
 
-    // ------------------------------------------------------------------ commands
+// ------------------------------------------------------------------ commands
 
-    struct Spawn {
-        SlimeId id;
-    };
+struct Spawn {
+    SlimeId id;
+};
 
-    struct Despawn {
-        SlimeId id;
-    };
+struct Despawn {
+    SlimeId id;
+};
 
-    // -------------------------------------------------------------------- events
+// -------------------------------------------------------------------- events
 
-    struct Events {
+struct Events {
 
-        void clear() {
-        }
-    };
+    void clear() {
+    }
+};
 
-    // --------------------------------------------------------------------- world
+// --------------------------------------------------------------------- world
 
-    class World {
-    private:
-        std::unordered_map<SlimeId, entt::entity> entities_;
+class GameManager {
+private:
+    std::unordered_map<SlimeId, entt::entity> entities_;
 
-        float t_ = 0;
+    float t_ = 0;
+    SlimeId _next = 1;
 
-        entt::registry registry_;
-        Events events_;
+    entt::registry registry_;
+    Events events_;
 
-        std::vector<Spawn> spawns_;
-        std::vector<Despawn> despawns_;
+    std::vector<Spawn> spawns_;
+    std::vector<Despawn> despawns_;
 
-    public:
-        void Enqueue(Spawn cmd) { spawns_.push_back(cmd); }
-        void Enqueue(Despawn cmd) { despawns_.push_back(cmd); }
+public:
+    void Enqueue(Spawn cmd) { spawns_.push_back(cmd); }
+    void Enqueue(Despawn cmd) { despawns_.push_back(cmd); }
 
-        // Defined inline: slime_world is header-only, so this is the only file to edit.
-        void Tick(float dt) {
-            events_.clear();
-            ApplyCommands();
+    // Defined inline: slime_world is header-only, so this is the only file to edit.
+    void Tick(float dt) {
+        events_.clear();
+        ApplyCommands();
 
-            t_ += dt;
+        t_ += dt;
 
-            // const auto view = registry_.view<Position>();
-            // view.each([this](Position &position) {
-            //     position = Position((int) (std::round(t_ / 10.0f)), 1);
-            //     std::println("pos: {}, {}", position.x, position.y);
-            // });
-        }
+        // const auto view = registry_.view<Position>();
+        // view.each([this](Position &position) {
+        //     position = Position((int) (std::round(t_ / 10.0f)), 1);
+        //     std::println("pos: {}, {}", position.x, position.y);
+        // });
+    }
 
-        const Events &events() const { return events_; }
+    const Events &events() const { return events_; }
 
-        const entt::registry &registry() const { return registry_; }
+    const entt::registry &registry() const { return registry_; }
 
-        auto GetSlimesWithPositions() const {
-            return registry_.view<const Networked, const Position>().each()
-                   | std::views::transform([](auto &&t) { return std::pair{std::get<1>(t).id, std::get<2>(t)}; });
-        }
+    SlimeId GetNextSlimeId() {
+        return _next++;
+    }
 
-        void ApplyCommands() {
-            for (const Spawn &cmd: spawns_) {
-                const entt::entity entity = registry_.create();
-                registry_.emplace<Networked>(entity, cmd.id);
-                registry_.emplace<Position>(entity, Position(0, 0));
-                entities_[cmd.id] = entity;
-            }
+    auto GetSlimesWithPositions() const {
+        return registry_.view<const Networked, const Position>().each()
+               | std::views::transform([](auto &&t) { return std::pair{std::get<1>(t).id, std::get<2>(t)}; });
+    }
 
-            spawns_.clear();
-
-            const auto to_despawn = std::ranges::to<std::unordered_set>(
-                despawns_ | std::views::transform(&Despawn::id));
-
-            for (const auto [entity, networked]: registry_.view<Networked>().each()) {
-                if (to_despawn.contains(networked.id)) {
-                    registry_.destroy(entity);
-                }
-            }
-
-            despawns_.clear();
+    void ApplyCommands() {
+        for (const Spawn &cmd: spawns_) {
+            const entt::entity entity = registry_.create();
+            registry_.emplace<Networked>(entity, cmd.id);
+            registry_.emplace<Position>(entity, Position(0, 0));
+            entities_[cmd.id] = entity;
         }
 
-        void MoveSlime(SlimeId slimeId, SlimeRepublics::Direction direction) {
-            if (!entities_.contains(slimeId)) {
-                std::println("Failed to get entity with id {}", slimeId);
-                return;
-            }
+        spawns_.clear();
 
-            const auto entity = entities_[slimeId];
+        const auto to_despawn = std::ranges::to<std::unordered_set>(
+            despawns_ | std::views::transform(&Despawn::id));
 
-            auto&& [networked, position] = registry_.view<const Networked, Position>().get(entity);
-
-            switch (direction) {
-                case SlimeRepublics::Direction::Up:
-                    position = Position(position.x, position.y + 1);
-                    break;
-                case SlimeRepublics::Direction::Down:
-                    position = Position(position.x, position.y - 1);
-                    break;
-                case SlimeRepublics::Direction::Left:
-                    position = Position(position.x - 1, position.y);
-                    break;
-                case SlimeRepublics::Direction::Right:
-                    position = Position(position.x + 1, position.y);
-                    break;
-                default:
-                    break;
+        for (const auto [entity, networked]: registry_.view<Networked>().each()) {
+            if (to_despawn.contains(networked.id)) {
+                registry_.destroy(entity);
             }
         }
-    };
-} // namespace slime
+
+        despawns_.clear();
+    }
+
+    void MoveSlime(SlimeId slimeId, SlimeRepublics::Direction direction) {
+        if (!entities_.contains(slimeId)) {
+            std::println("Failed to get entity with id {}", slimeId);
+            return;
+        }
+
+        const auto entity = entities_[slimeId];
+
+        auto&& [networked, position] = registry_.view<const Networked, Position>().get(entity);
+
+        switch (direction) {
+            case SlimeRepublics::Direction::Up:
+                position = Position(position.x, position.y + 1);
+                break;
+            case SlimeRepublics::Direction::Down:
+                position = Position(position.x, position.y - 1);
+                break;
+            case SlimeRepublics::Direction::Left:
+                position = Position(position.x - 1, position.y);
+                break;
+            case SlimeRepublics::Direction::Right:
+                position = Position(position.x + 1, position.y);
+                break;
+            default:
+                break;
+        }
+    }
+};

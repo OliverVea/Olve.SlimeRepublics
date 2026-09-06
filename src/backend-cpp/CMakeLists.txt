@@ -108,15 +108,31 @@ add_library(slime_world INTERFACE)
 target_link_libraries(slime_world INTERFACE EnTT::EnTT schema)
 target_include_directories(slime_world INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")
 
+# -------------------------------------------------------------------- codec
+
+# The wire layer: FlatBuffers in, FlatBuffers out. Links schema and slime_world because
+# codec.h includes both, and deliberately does NOT link uwebsockets — the same rule the world
+# lives under, for the same reason. Encoding produces bytes; deciding where they go is the
+# transport's job, and not linking the socket library is what keeps that true rather than
+# remembered.
+#
+# The first target here that actually compiles something, so it needs its own edge to flatc:
+# an INTERFACE library cannot propagate an order-only dependency to its consumers.
+add_library(slime_codec STATIC codec.cpp codec.h)
+add_dependencies(slime_codec generate_schema)
+target_link_libraries(slime_codec PUBLIC slime_world schema)
+
 # ------------------------------------------------------------------- server
 
-add_executable(backend_cpp main.cpp
-        encoding.h
-        encoding.cpp)
-# An INTERFACE library cannot carry an order-only dependency to its consumers, so the one
-# target that actually compiles has to wait for flatc itself.
+# codec.cpp is NOT listed here: it belongs to slime_codec, and naming it in both targets
+# compiles it twice. CLion offers to add every new file to this target — decline, and put it
+# in the library it belongs to instead.
+add_executable(backend_cpp main.cpp)
+# main.cpp includes common_generated.h directly, and an INTERFACE library cannot carry an
+# order-only dependency to its consumers, so this target needs its own edge to flatc too.
 add_dependencies(backend_cpp generate_schema)
 target_link_libraries(backend_cpp PRIVATE
+    slime_codec
     slime_world
     schema
     unofficial::uwebsockets::uwebsockets
