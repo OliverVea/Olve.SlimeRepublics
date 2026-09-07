@@ -1,15 +1,3 @@
-// The simulation. Owns all game state and advances it.
-//
-// This header must never reference uWebSockets, uSockets or libuv. The world
-// does not know it is being served over a network — the transport enqueues
-// commands into it and drains events out of it, and nothing else. That rule is
-// what keeps Tick() testable headless, and what would make moving the
-// simulation onto its own thread a move rather than a rewrite.
-//
-// CMake enforces it: the slime_world target does not link uwebsockets.
-//
-// slime_world is header-only (an INTERFACE target) — everything lives in this file,
-// so there is no second file to keep in step while the simulation is moving fast.
 #pragma once
 
 #include <cmath>
@@ -22,15 +10,10 @@
 
 #include <entt/entt.hpp>
 
-#include "common_generated.h"
+#include "primitives.h"
 
-using SlimeId = std::uint32_t;
 
 // ---------------------------------------------------------------- components
-
-struct Position {
-    int x = 0, y = 0;
-};
 
 struct Movable {
     float speed = 1.0f;
@@ -75,8 +58,8 @@ private:
     std::vector<Despawn> despawns_;
 
 public:
-    void Enqueue(Spawn cmd) { spawns_.push_back(cmd); }
-    void Enqueue(Despawn cmd) { despawns_.push_back(cmd); }
+    void Enqueue(const Spawn cmd) { spawns_.push_back(cmd); }
+    void Enqueue(const Despawn cmd) { despawns_.push_back(cmd); }
 
     // Defined inline: slime_world is header-only, so this is the only file to edit.
     void Tick(float dt) {
@@ -100,8 +83,8 @@ public:
         return _next++;
     }
 
-    auto GetSlimesWithPositions() const {
-        return registry_.view<const Networked, const Position>().each()
+    auto GetSlimesWithPoses() const {
+        return registry_.view<const Networked, const Pose>().each()
                | std::views::transform([](auto &&t) { return std::pair{std::get<1>(t).id, std::get<2>(t)}; });
     }
 
@@ -109,7 +92,7 @@ public:
         for (const Spawn &cmd: spawns_) {
             const entt::entity entity = registry_.create();
             registry_.emplace<Networked>(entity, cmd.id);
-            registry_.emplace<Position>(entity, Position(0, 0));
+            registry_.emplace<Pose>(entity, Pose());
             entities_[cmd.id] = entity;
         }
 
@@ -127,31 +110,29 @@ public:
         despawns_.clear();
     }
 
-    void MoveSlime(SlimeId slimeId, SlimeRepublics::Direction direction) {
+    void MoveSlime(SlimeId slimeId, Direction direction) {
         if (!entities_.contains(slimeId)) {
             std::println("Failed to get entity with id {}", slimeId);
             return;
         }
 
         const auto entity = entities_[slimeId];
+        auto&& [pose] = registry_.view<Pose>().get(entity);
 
-        auto&& [networked, position] = registry_.view<const Networked, Position>().get(entity);
+        const Vec2i delta = to_vector(direction);
+        pose.position += delta;
+        pose.heading = direction;
+    }
 
-        switch (direction) {
-            case SlimeRepublics::Direction::Up:
-                position = Position(position.x, position.y + 1);
-                break;
-            case SlimeRepublics::Direction::Down:
-                position = Position(position.x, position.y - 1);
-                break;
-            case SlimeRepublics::Direction::Left:
-                position = Position(position.x - 1, position.y);
-                break;
-            case SlimeRepublics::Direction::Right:
-                position = Position(position.x + 1, position.y);
-                break;
-            default:
-                break;
+    void SlimeInteract(SlimeId slimeId) {
+        if (!entities_.contains(slimeId)) {
+            std::println("Failed to get entity with id {}", slimeId);
+            return;
         }
+
+        const auto entity = entities_[slimeId];
+        auto&& [pose] = registry_.view<const Pose>().get(entity);
+
+        std::println("Slime {} interacts {}", slimeId, pose.heading);
     }
 };

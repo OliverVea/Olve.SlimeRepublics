@@ -33,7 +33,7 @@ Socket callbacks never mutate the world. They enqueue commands, and the tick
 applies them, so ordering belongs to the simulation rather than to the order
 packets happened to arrive.
 
-`world.h` must never reference uWebSockets, uSockets or libuv. CMake enforces
+`game/world.h` must never reference uWebSockets, uSockets or libuv. CMake enforces
 this: the `slime_world` target does not link `uwebsockets`. That seam is what
 keeps `Tick()` testable headless, and what would make moving the simulation to
 its own thread a move rather than a rewrite.

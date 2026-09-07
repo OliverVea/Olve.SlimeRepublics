@@ -108,6 +108,29 @@ add_library(slime_world INTERFACE)
 target_link_libraries(slime_world INTERFACE EnTT::EnTT schema)
 target_include_directories(slime_world INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")
 
+# The headers are listed so IDEs file them under this target rather than under whichever
+# executable happened to be open when they were created. FILE_SET HEADERS (not plain
+# target_sources) because these are headers, not translation units: it records them for the
+# IDE and for install() without ever handing them to the compiler as sources.
+#
+# BASE_DIRS restates the include directory set just above. That is deliberate, not a leftover:
+# FILE_SET needs it to compute each header's install-relative path, and it appends the same
+# path to the interface include directories, so deleting either line still leaves the other
+# working. Keep both — the explicit target_include_directories is what a reader looks for.
+target_sources(slime_world INTERFACE
+    FILE_SET HEADERS
+    BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES
+        game/primitives.h
+        game/world.h
+)
+
+# Compile each header in the set on its own, as its own translation unit, and fail the build
+# if one does not stand up alone. This is what catches a header that only works because some
+# other header happened to include <format> first: reorder two includes and the failure would
+# otherwise surface somewhere unrelated. CMake generates a verify target per header set.
+set_target_properties(slime_world PROPERTIES VERIFY_INTERFACE_HEADER_SETS TRUE)
+
 # -------------------------------------------------------------------- codec
 
 # The wire layer: FlatBuffers in, FlatBuffers out. Links schema and slime_world because
@@ -118,7 +141,13 @@ target_include_directories(slime_world INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}")
 #
 # The first target here that actually compiles something, so it needs its own edge to flatc:
 # an INTERFACE library cannot propagate an order-only dependency to its consumers.
-add_library(slime_codec STATIC codec.cpp codec.h)
+add_library(slime_codec STATIC transport/codec.cpp)
+target_sources(slime_codec PUBLIC
+    FILE_SET HEADERS
+    BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}"
+    FILES transport/codec.h
+)
+set_target_properties(slime_codec PROPERTIES VERIFY_INTERFACE_HEADER_SETS TRUE)
 add_dependencies(slime_codec generate_schema)
 target_link_libraries(slime_codec PUBLIC slime_world schema)
 
@@ -131,6 +160,11 @@ add_executable(backend_cpp main.cpp)
 # main.cpp includes common_generated.h directly, and an INTERFACE library cannot carry an
 # order-only dependency to its consumers, so this target needs its own edge to flatc too.
 add_dependencies(backend_cpp generate_schema)
+
+# CMake excludes the header-set verification targets from "all", so a plain `cmake --build`
+# would never run them. Hanging them off the executable is what makes a header that does not
+# stand alone break the ordinary build rather than a target nobody remembers to invoke.
+add_dependencies(backend_cpp all_verify_interface_header_sets)
 target_link_libraries(backend_cpp PRIVATE
     slime_codec
     slime_world

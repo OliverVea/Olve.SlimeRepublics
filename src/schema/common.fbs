@@ -7,13 +7,14 @@ struct Vec2 {
   y: int;
 }
 
-enum Direction : byte { Up, Down, Left, Right }
+enum Direction : byte { None, Up, Down, Left, Right }
 
 // ---------------------------------------------------------------------- world
 
 table Slime {
   id: uint;
   position: Vec2;
+  heading: Direction;
 }
 
 table WorldState {
@@ -34,18 +35,22 @@ table PongEvent {
   origin_time: double;
 }
 
+table InteractEvent {
+
+}
+
 // ------------------------------------------------------------------- envelopes
 
-union ClientEvent { MoveEvent, PingEvent, PongEvent }
+union ClientEvent { PingEvent, PongEvent, MoveEvent, InteractEvent }
 
 table ClientInput {
-  events: [ ClientEvent ];
+  events: [ ClientEvent ] (required);
 }
 
 union ServerEvent { WorldState, PingEvent, PongEvent }
 
 table ServerMessage {
-  events: [ ServerEvent ];
+  events: [ ServerEvent ] (required);
 }
 
 file_identifier "SLIM";

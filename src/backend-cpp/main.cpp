@@ -7,13 +7,14 @@
 #include <uwebsockets/App.h>
 
 #include "common_generated.h"
-#include "world.h"
-#include "codec.h"
+#include "game/world.h"
+#include "transport/codec.h"
 
 namespace {
     constexpr const char *kHost = "0.0.0.0";
     constexpr int kPort = 9001;
-    constexpr int kTickHz = 100;
+    constexpr int kTickHz = 20
+    ;
     constexpr int kTickIntervalMs = 1000 / kTickHz;
     constexpr float kTickDt = 1.0f / static_cast<float>(kTickHz);
 
@@ -42,7 +43,13 @@ namespace {
             switch (event_type) {
                 case SlimeRepublics::ClientEvent::MoveEvent: {
                     const auto moveEvent = static_cast<const SlimeRepublics::MoveEvent*>(raw_event);
-                    game_manager.MoveSlime(ws->getUserData()->slime_id, moveEvent->direction());
+                    const auto direction = codec.FromWire(moveEvent->direction());
+                    game_manager.MoveSlime(ws->getUserData()->slime_id, direction);
+                    break;
+                }
+                case SlimeRepublics::ClientEvent::InteractEvent: {
+                    //const auto interactEvent = static_cast<const SlimeRepublics::InteractEvent*>(raw_event);
+                    game_manager.SlimeInteract(ws->getUserData()->slime_id);
                     break;
                 }
                 case SlimeRepublics::ClientEvent::PingEvent: {
