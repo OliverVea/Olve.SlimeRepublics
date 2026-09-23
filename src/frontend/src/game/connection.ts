@@ -5,7 +5,7 @@
 // nothing from it.
 //
 // One connection is one slime. The server spawns a slime on open and despawns it on close
-// (see backend-cpp/main.cpp), so a reconnect gets a *new* id; there is no way to reclaim the
+// (see backend/main.cpp), so a reconnect gets a *new* id; there is no way to reclaim the
 // old one and the client must not assume its id is stable across drops.
 
 import { decodeServerMessage, type ServerFrame } from "./protocol.js";

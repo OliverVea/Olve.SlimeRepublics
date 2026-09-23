@@ -5,10 +5,10 @@ See [docs/tech-design.md](docs/tech-design.md) for how the system is put togethe
 ## Commands
 
 ```bash
-# Server (src/backend-cpp)
+# Server (src/backend)
 cmake --preset debug && cmake --build build   # build
 ctest --test-dir build                        # tests (Catch2)
-./build/backend_cpp                           # run, ws://localhost:9001
+./build/slime_server                           # run, ws://localhost:9001
 
 # Client (src/frontend)
 npm run dev                                   # http://localhost:5173
@@ -20,7 +20,7 @@ npm test && npm run lint && npm run build     # tests, Biome, typecheck + bundle
 
 ## Conventions
 
-- **No AI hands in the C++ or the schema.** Oliver writes the C++ (`src/backend-cpp/src`,
+- **No AI hands in the C++ or the schema.** Oliver writes the C++ (`src/backend/src`,
   `tests`) and the schema (`src/schema/*.fbs`) by hand. Do not write or rewrite either unless
   asked; explain, review and suggest instead. Build files, scripts and the client are fair game.
 - **The schema is the contract.** Every message is defined in `src/schema/*.fbs`. A contract

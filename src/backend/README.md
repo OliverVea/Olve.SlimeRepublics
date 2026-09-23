@@ -1,11 +1,11 @@
-# backend-cpp
+# backend: the game server
 
 The game server. CMake + vcpkg, built and run from CLion or the terminal.
 
 ```bash
 cmake --preset debug
 cmake --build build
-./build/backend_cpp        # ws://localhost:9001
+./build/slime_server        # ws://localhost:9001
 ```
 
 ## First time on a machine

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Regenerates the TypeScript FlatBuffers client from src/schema/*.fbs.
 #
-# The C++ side is NOT generated here — src/backend-cpp generates it at build
+# The C++ side is NOT generated here — src/backend generates it at build
 # time with vcpkg's flatc, so its version matches the C++ headers by
 # construction. This script covers src/frontend only.
 #

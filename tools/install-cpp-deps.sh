@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Host toolchain + vcpkg bootstrap for src/backend-cpp.
+# Host toolchain + vcpkg bootstrap for src/backend.
 #
-# Everything the server actually links comes from src/backend-cpp/vcpkg.json,
+# Everything the server actually links comes from src/backend/vcpkg.json,
 # pinned by its builtin-baseline. This script only installs what vcpkg cannot
 # provide for itself: the compiler toolchain, CMake/Ninja, and the autotools
 # that libsodium's build requires on the host.
@@ -41,7 +41,7 @@ cat <<MSG
 
 Done. Build with:
 
-    cd src/backend-cpp
+    cd src/backend
     cmake --preset debug     # first run installs the vcpkg dependencies
     cmake --build build
 

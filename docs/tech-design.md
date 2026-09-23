@@ -33,13 +33,13 @@ belongs to the simulation rather than to packet arrival.
 
 | Component | Where | What it does |
 |---|---|---|
-| **Game** | `src/backend-cpp/src/game/` | The simulation: an EnTT entity registry, the event queue, and `GameManager::Tick`. Must not reference the network; the `slime_world` CMake target does not link uWebSockets, so a violation is a link error. |
-| **Transport** | `src/backend-cpp/src/transport/` | The codec: encodes the `WorldState` broadcast and pongs, and maps wire enums to game types, rejecting out-of-range values. |
-| **Server entry** | `src/backend-cpp/src/main.cpp` | Wires the uWebSockets app, the tick timer and the codec onto one loop. Every incoming frame goes through the FlatBuffers verifier before it is read. One socket is one slime: spawned on open, despawned on close. |
-| **Users** | `src/backend-cpp/src/users/` | Account login, in progress. Passwords are hashed with libsodium (Argon2); an unknown email is verified against a dummy hash so login timing does not reveal which accounts exist. The user store is still a stub. |
+| **Game** | `src/backend/src/game/` | The simulation: an EnTT entity registry, the event queue, and `GameManager::Tick`. Must not reference the network; the `slime_world` CMake target does not link uWebSockets, so a violation is a link error. |
+| **Transport** | `src/backend/src/transport/` | The codec: encodes the `WorldState` broadcast and pongs, and maps wire enums to game types, rejecting out-of-range values. |
+| **Server entry** | `src/backend/src/main.cpp` | Wires the uWebSockets app, the tick timer and the codec onto one loop. Every incoming frame goes through the FlatBuffers verifier before it is read. One socket is one slime: spawned on open, despawned on close. |
+| **Users** | `src/backend/src/users/` | Account login, in progress. Passwords are hashed with libsodium (Argon2); an unknown email is verified against a dummy hash so login timing does not reveal which accounts exist. The user store is still a stub. |
 | **Schema** | `src/schema/` | The API contract. `common.fbs` defines every client and server message. The C++ side is generated at build time; the TypeScript side by `generate.sh`, committed. |
 | **Client** | `src/frontend/` | Vanilla TypeScript, Vite, Vitest, Biome. Connects, decodes `WorldState`, sends input and pings. `tile-map.ts` is a debug renderer; the real renderer (see below) replaces that one file. |
-| **Tests** | `src/backend-cpp/tests/`, `src/frontend/src/**/*.test.ts` | Catch2 on the server; Vitest on the client, including a frame captured off the running server so wire-format drift fails a test. |
+| **Tests** | `src/backend/tests/`, `src/frontend/src/**/*.test.ts` | Catch2 on the server; Vitest on the client, including a frame captured off the running server so wire-format drift fails a test. |
 
 ---
 

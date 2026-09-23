@@ -6,7 +6,7 @@ act on the same world state at the same moment. It is an early prototype.
 
 This repo is the game server and a debug client:
 
-- **Server** ([src/backend-cpp](src/backend-cpp)): hand-written C++23. An EnTT simulation on a
+- **Server** ([src/backend](src/backend)): hand-written C++23. An EnTT simulation on a
   fixed 20 Hz tick, served over WebSockets (uWebSockets) on a single event loop.
 - **API contract** ([src/schema](src/schema)): one FlatBuffers schema that generates the message
   types for both the server and the client.
@@ -17,8 +17,8 @@ This repo is the game server and a debug client:
 
 ```bash
 tools/install-cpp-deps.sh                  # first time on a machine
-cd src/backend-cpp && cmake --preset debug && cmake --build build
-./build/backend_cpp                        # ws://localhost:9001
+cd src/backend && cmake --preset debug && cmake --build build
+./build/slime_server                        # ws://localhost:9001
 
 cd src/frontend && npm ci && npm run dev   # http://localhost:5173
 ```
@@ -29,6 +29,6 @@ cd src/frontend && npm ci && npm run dev   # http://localhost:5173
 |---|---|
 | What the game is meant to be | [docs/game-design-document.md](docs/game-design-document.md) |
 | How the system is put together | [docs/tech-design.md](docs/tech-design.md) |
-| Building and running the server | [src/backend-cpp/README.md](src/backend-cpp/README.md) |
+| Building and running the server | [src/backend/README.md](src/backend/README.md) |
 | The wire format and codegen | [src/schema/README.md](src/schema/README.md) |
 | The client | [src/frontend/README.md](src/frontend/README.md) |

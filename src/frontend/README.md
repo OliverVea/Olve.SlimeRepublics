@@ -6,7 +6,7 @@ decodes the FlatBuffers `WorldState` broadcast at 20 Hz, draws the slimes, and s
 ## Run it
 
 ```bash
-../backend-cpp/build/backend_cpp    # ws://localhost:9001
+../backend/build/slime_server    # ws://localhost:9001
 npm install
 npm run dev                         # http://localhost:5173
 ```

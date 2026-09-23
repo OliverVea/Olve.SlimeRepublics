@@ -37,7 +37,7 @@ if(NOT DEFINED CMAKE_CXX_COMPILER)
     endif()
 endif()
 
-project(backend_cpp CXX)
+project(slime_server CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -203,19 +203,19 @@ target_link_libraries(slime_codec PUBLIC slime_world schema)
 # codec.cpp is NOT listed here: it belongs to slime_codec, and naming it in both targets
 # compiles it twice. CLion offers to add every new file to this target — decline, and put it
 # in the library it belongs to instead.
-add_executable(backend_cpp "${src_dir}/main.cpp")
+add_executable(slime_server "${src_dir}/main.cpp")
 # main.cpp includes common_generated.h directly, and an INTERFACE library cannot carry an
 # order-only dependency to its consumers, so this target needs its own edge to flatc too.
-add_dependencies(backend_cpp generate_schema)
+add_dependencies(slime_server generate_schema)
 
 # CMake excludes the header-set verification targets from "all", so a plain `cmake --build`
 # would never run them. Hanging them off the executable is what makes a header that does not
 # stand alone break the ordinary build rather than a target nobody remembers to invoke.
-add_dependencies(backend_cpp all_verify_interface_header_sets)
+add_dependencies(slime_server all_verify_interface_header_sets)
 # tomlplusplus is linked ONLY here. Reading configuration is the executable's job; nothing
 # below main should be able to ask what the config file says, for the same reason the world
 # does not link uwebsockets. Header-only and dependency-free, so this adds nothing to link.
-target_link_libraries(backend_cpp PRIVATE
+target_link_libraries(slime_server PRIVATE
     tomlplusplus::tomlplusplus
     slime_codec
     slime_world
