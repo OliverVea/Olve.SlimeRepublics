@@ -36,8 +36,7 @@ npm test && npm run lint && npm run build     # tests, Biome, typecheck + bundle
 
 ## Deploy
 
-Olve.Pipelines, config in `.pipelines/` (not yet bound as of 2026-09-23). Once bound, a push to
-`main` builds two images and deploys beta
+Olve.Pipelines, config in `.pipelines/`. A push to `main` builds two images and deploys beta
 (`slimes-beta.ovea.pro`, Tailscale) then prod (`slimes.ovea.pro`, Cloudflare tunnel):
 
 - `Dockerfile` (repo root): the game server on Debian trixie. The Catch2 suite runs inside the
