@@ -34,8 +34,17 @@ npm test && npm run lint && npm run build     # tests, Biome, typecheck + bundle
 - flatc, the C++ flatbuffers headers and the `flatbuffers` npm package are pinned to the same
   version. See `src/schema/README.md` before bumping any of them.
 
-## Not deployed
+## Deploy
 
-There is no deploy pipeline. The earlier .NET server, its Dockerfile, Helm chart and
-Olve.Pipelines config were removed on 2026-09-23 when the C++ server replaced it. A deploy for the
-C++ server has not been built yet.
+Olve.Pipelines, config in `.pipelines/` (not yet bound as of 2026-09-23). Once bound, a push to
+`main` builds two images and deploys beta
+(`slimes-beta.ovea.pro`, Tailscale) then prod (`slimes.ovea.pro`, Cloudflare tunnel):
+
+- `Dockerfile` (repo root): the game server on Debian trixie. The Catch2 suite runs inside the
+  image build, so a failing test fails the build.
+- `src/frontend/Dockerfile` + `nginx.conf`: the client behind nginx, which proxies `/ws` to
+  the server. The client is built with `VITE_WS_URL=/ws`.
+- `helm/`: both Deployments, their Services and NetworkPolicies. The server stays at one replica
+  with `Recreate`; the world is in memory and is lost on every deploy.
+
+The hostnames are routed in the Olve.Homelab edge chart, not here.

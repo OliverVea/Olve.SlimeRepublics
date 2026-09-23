@@ -1,8 +1,7 @@
 // Socket lifecycle: connect, decode, reconnect with backoff.
 //
-// This talks to the C++ game server directly rather than through Vite's /api proxy — the
-// proxy exists to keep the REST client same-origin, and a WebSocket to another port gains
-// nothing from it.
+// In dev this talks to the C++ game server directly on its own port. Deployed, nginx serves
+// the page and proxies /ws to the server, and the build sets VITE_WS_URL to that bare path.
 //
 // One connection is one slime. The server spawns a slime on open and despawns it on close
 // (see backend/main.cpp), so a reconnect gets a *new* id; there is no way to reclaim the
@@ -36,8 +35,18 @@ function defaultUrl(): string {
   return `${scheme}://${window.location.hostname}:${DEFAULT_PORT}`;
 }
 
+/** Resolves a bare path such as "/ws" against the page's origin; full URLs pass through. */
+export function resolveUrl(url: string, page: Pick<Location, "protocol" | "host">): string {
+  if (!url.startsWith("/")) return url;
+  const scheme = page.protocol === "https:" ? "wss" : "ws";
+  return `${scheme}://${page.host}${url}`;
+}
+
 export function connect(options: ConnectionOptions): Connection {
-  const url = options.url ?? import.meta.env.VITE_WS_URL ?? defaultUrl();
+  const url = resolveUrl(
+    options.url ?? import.meta.env.VITE_WS_URL ?? defaultUrl(),
+    window.location,
+  );
 
   let socket: WebSocket | null = null;
   let retryMs = RECONNECT_MIN_MS;

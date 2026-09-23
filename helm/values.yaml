@@ -1,0 +1,48 @@
+# Two Deployments: the game server, and nginx serving the client + proxying /ws to it.
+# The edge (Olve.Homelab chart) routes the host to the web Service only; the server is never
+# reachable except through nginx.
+#
+# The deploy scripts release this chart as `olve-slimerepublics` in both apps-beta and apps.
+# nginx.conf hardcodes the server Service name from that, so keep the release name.
+
+# The server image. Top-level `image` because olve_helm_deploy --sets image.repository,
+# image.tag and image.pullPolicy=Never on every deploy (the image is imported onto the node,
+# not pulled).
+image:
+  repository: olve-slimerepublics
+  tag: latest
+  pullPolicy: IfNotPresent
+
+server:
+  port: 9001
+  resources:
+    # The server runs one Argon2 hash (~64 MiB, MEMLIMIT_INTERACTIVE) at startup and one per
+    # login/signup. They run on the single loop thread, so one at a time — but the limit
+    # must leave room for one on top of the world.
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 1000m
+      memory: 256Mi
+
+web:
+  image:
+    repository: docker.io/library/olve-slimerepublics-web
+    # Set per deploy from web-version.txt; the web image is built by its own step.
+    tag: latest
+    # Imported onto the node like the server image; the helper only sets this for `image`.
+    pullPolicy: Never
+  port: 8080
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 200m
+      memory: 64Mi
+
+# Default-deny for both pods: only Traefik reaches nginx, only nginx reaches the server, and
+# the server has no egress at all. k3s's embedded network-policy controller enforces it.
+networkPolicy:
+  enabled: true

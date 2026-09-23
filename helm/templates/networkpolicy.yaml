@@ -1,0 +1,60 @@
+{{- if .Values.networkPolicy.enabled }}
+# Selected by pod label, not namespace-wide: other workloads in apps / apps-beta keep their
+# own reachability. Kubelet probes come from the node and are not subject to these rules.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-web
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Release.Name }}-web
+  policyTypes: [Ingress, Egress]
+  ingress:
+    # Both public paths end at Traefik: prod arrives via cloudflared -> Traefik, beta via
+    # Tailscale -> Traefik.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - { protocol: TCP, port: {{ .Values.web.port }} }
+  egress:
+    # nginx resolves the server Service name at startup.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    - to:
+        - podSelector:
+            matchLabels:
+              app: {{ .Release.Name }}-server
+      ports:
+        - { protocol: TCP, port: {{ .Values.server.port }} }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-server
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Release.Name }}-server
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ .Release.Name }}-web
+      ports:
+        - { protocol: TCP, port: {{ .Values.server.port }} }
+  # No egress: the game server has nothing to call out to. A compromised process cannot
+  # reach the rest of the cluster or the internet.
+  egress: []
+{{- end }}

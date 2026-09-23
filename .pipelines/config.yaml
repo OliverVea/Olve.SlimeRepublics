@@ -1,0 +1,74 @@
+# In-repo CD pipeline (GitOps) for Slime Republics, deployed by Olve.Pipelines.
+#
+# This file is the single source of truth for how the game is built and deployed. The bound
+# pipeline reconciles to it on every push, and a push to main deploys (the deploy poll comes
+# from the binding; no trigger is declared here).
+#
+# Two images: the C++ game server (Dockerfile at the repo root) and the web image — the client
+# behind nginx, which also proxies /ws to the server (src/frontend/Dockerfile). Beta deploys
+# first and gates prod: if deploy-beta fails (import, rollout, or the WebSocket check through
+# the beta host), deploy never runs.
+#
+# Secrets are declared by NAME only; values live in the pipeline's k8s secret
+# (olve-pipeline-{id}) and are mounted into every job as env vars.
+#
+# Routing lives in the Olve.Homelab edge chart, not here: the chart renders ClusterIP Services
+# only. slimes-beta.ovea.pro (Tailscale) and slimes.ovea.pro (Cloudflare tunnel) both route to
+# the web Service.
+apiVersion: "0.0"
+name: Olve.SlimeRepublics
+description: Build the game server and web images with Kaniko, deploy beta then prod with Helm.
+version: "2"
+
+secrets:
+  - name: GITHUB_TOKEN
+    description: GitHub read token used to fetch the repo tarball.
+  - name: SSH_PRIVATE_KEY
+    description: SSH key for importing images and running helm on the homelab host.
+
+# Production steps run in parallel and write to bundle/<step>/. Any failure fails the group,
+# and nothing deploys.
+productionSteps:
+  # Builds the server and runs its Catch2 suite inside the image build (the build stage
+  # already has the whole vcpkg toolchain; a separate test step would build it all twice).
+  # Stages the helm chart and version.txt — the deploy scripts find this step's dir by it.
+  - name: build-server
+    configuration:
+      image: gcr.io/kaniko-project/executor:debug
+      scriptFile: scripts/build-server.sh
+  # The client image. Writes web-version.txt, never version.txt, so olve_bundle_input keeps
+  # picking the server step's dir.
+  - name: build-web
+    configuration:
+      image: gcr.io/kaniko-project/executor:debug
+      scriptFile: scripts/build-web.sh
+  # Biome + Vitest + typecheck. The web image build only runs `npm run build`.
+  - name: frontend-check
+    configuration:
+      image: node:24-alpine
+      scriptFile: scripts/frontend-check.sh
+
+# Processing steps run sequentially, each receiving the bundle. deploy-beta gates deploy.
+processingSteps:
+  - name: deploy-beta
+    configuration:
+      image: alpine:latest
+      scriptFile: scripts/deploy-beta.sh
+  - name: deploy
+    configuration:
+      image: alpine:latest
+      scriptFile: scripts/deploy.sh
+
+# Best-effort on any failure: opens an Agent of Empires session to investigate.
+failureHandlers:
+  - handler: aoe-triage
+    env:
+      AOE_BASE_URL: http://agent-of-empires.apps.svc.cluster.local:8080
+      AOE_TOOL: claude
+      AOE_REPO_PATH: /home/oliver/projects/Olve.SlimeRepublics
+      AOE_PROMPT_TEMPLATE: >-
+        The Olve.SlimeRepublics CD pipeline '$PIPELINE_NAME' failed at step
+        '$PIPELINE_FAILED_STEP' ($PIPELINE_FAILED_STEP_KIND): $PIPELINE_FAILURE_REASON.
+        The failed job's logs are in S3 at key '$PIPELINE_LOG_KEY' (pipeline id $PIPELINE_ID).
+        Investigate the root cause and report it. Oliver writes the C++ and the schema by
+        hand: propose fixes there, do not apply them.

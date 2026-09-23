@@ -1,0 +1,10 @@
+# The server image's context is the repo root (it needs src/schema next to src/backend).
+# Never ship local build trees: a host vcpkg_installed is the wrong toolchain for the image
+# and is gigabytes of context.
+.git
+.claude
+docs
+src/backend/build*
+src/backend/cmake-build-*
+**/node_modules
+**/dist
