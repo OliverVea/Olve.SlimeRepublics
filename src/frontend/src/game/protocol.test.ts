@@ -33,8 +33,8 @@ describe("decodeServerMessage", () => {
 
     expect(frame.world).toEqual({
       slimes: [
-        { id: 1, x: 3, y: 1 },
-        { id: 2, x: -4, y: 0 },
+        { id: 1, x: 3, y: 1, heading: Direction.None },
+        { id: 2, x: -4, y: 0, heading: Direction.None },
       ],
     });
     expect(frame.pongs).toEqual([1234.5]);
@@ -69,14 +69,24 @@ describe("encodeClientInput", () => {
     }
   });
 
-  // Direction.Up is 0, which is also the field default — FlatBuffers omits a field equal to
-  // its default, so an Up event carries no direction field at all and the reader falls back
-  // to Up. It round-trips, but a decoder that treats "field absent" as an error breaks on it.
-  it("round-trips Up, which serializes as an absent field", () => {
-    expect(Direction.Up).toBe(0);
+  // Direction.None is 0, which is also the field default — FlatBuffers omits a field equal to
+  // its default, so a None event carries no direction field at all and the reader falls back
+  // to None. It round-trips, but a decoder that treats "field absent" as an error breaks on
+  // it. Pinning the ordinal is the point: whichever member sits at 0 is the one that vanishes
+  // on the wire, so if common.fbs reorders Direction this test says so.
+  it("round-trips None, which serializes as an absent field", () => {
+    expect(Direction.None).toBe(0);
     expect(
-      decodeClientInput(encodeClientInput([{ kind: "move", direction: Direction.Up }]).buffer),
-    ).toEqual([{ kind: "move", direction: Direction.Up }]);
+      decodeClientInput(encodeClientInput([{ kind: "move", direction: Direction.None }]).buffer),
+    ).toEqual([{ kind: "move", direction: Direction.None }]);
+  });
+
+  // An empty table: the union tag carries the whole meaning, so there is no payload to get
+  // wrong — only the tag, which is exactly what went stale between client and server before.
+  it("round-trips interact, which has no payload", () => {
+    expect(decodeClientInput(encodeClientInput([{ kind: "interact" }]).buffer)).toEqual([
+      { kind: "interact" },
+    ]);
   });
 
   it("round-trips ping and pong timestamps exactly, fractions included", () => {

@@ -3,6 +3,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
+import { InteractEvent } from '../slime-republics/interact-event.js';
 import { MoveEvent } from '../slime-republics/move-event.js';
 import { PingEvent } from '../slime-republics/ping-event.js';
 import { PongEvent } from '../slime-republics/pong-event.js';
@@ -10,34 +11,37 @@ import { PongEvent } from '../slime-republics/pong-event.js';
 
 export enum ClientEvent {
   NONE = 0,
-  MoveEvent = 1,
-  PingEvent = 2,
-  PongEvent = 3
+  PingEvent = 1,
+  PongEvent = 2,
+  MoveEvent = 3,
+  InteractEvent = 4
 }
 
 export function unionToClientEvent(
   type: ClientEvent,
-  accessor: (obj:MoveEvent|PingEvent|PongEvent) => MoveEvent|PingEvent|PongEvent|null
-): MoveEvent|PingEvent|PongEvent|null {
+  accessor: (obj:InteractEvent|MoveEvent|PingEvent|PongEvent) => InteractEvent|MoveEvent|PingEvent|PongEvent|null
+): InteractEvent|MoveEvent|PingEvent|PongEvent|null {
   switch(ClientEvent[type]) {
     case 'NONE': return null; 
-    case 'MoveEvent': return accessor(new MoveEvent())! as MoveEvent;
     case 'PingEvent': return accessor(new PingEvent())! as PingEvent;
     case 'PongEvent': return accessor(new PongEvent())! as PongEvent;
+    case 'MoveEvent': return accessor(new MoveEvent())! as MoveEvent;
+    case 'InteractEvent': return accessor(new InteractEvent())! as InteractEvent;
     default: return null;
   }
 }
 
 export function unionListToClientEvent(
   type: ClientEvent, 
-  accessor: (index: number, obj:MoveEvent|PingEvent|PongEvent) => MoveEvent|PingEvent|PongEvent|null, 
+  accessor: (index: number, obj:InteractEvent|MoveEvent|PingEvent|PongEvent) => InteractEvent|MoveEvent|PingEvent|PongEvent|null, 
   index: number
-): MoveEvent|PingEvent|PongEvent|null {
+): InteractEvent|MoveEvent|PingEvent|PongEvent|null {
   switch(ClientEvent[type]) {
     case 'NONE': return null; 
-    case 'MoveEvent': return accessor(index, new MoveEvent())! as MoveEvent;
     case 'PingEvent': return accessor(index, new PingEvent())! as PingEvent;
     case 'PongEvent': return accessor(index, new PongEvent())! as PongEvent;
+    case 'MoveEvent': return accessor(index, new MoveEvent())! as MoveEvent;
+    case 'InteractEvent': return accessor(index, new InteractEvent())! as InteractEvent;
     default: return null;
   }
 }

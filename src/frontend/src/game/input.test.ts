@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Direction } from "../generated/slime-republics.js";
 import type { Connection } from "./connection.js";
-import { attachInput, directionForKey, KEY_DIRECTIONS } from "./input.js";
+import { attachInput, directionForKey, isInteractKey, KEY_DIRECTIONS } from "./input.js";
 import { decodeClientInput } from "./protocol.js";
 
 function fakeConnection(): Connection & { sent: Uint8Array[] } {
@@ -24,6 +24,17 @@ describe("directionForKey", () => {
   it("ignores unrelated keys", () => {
     expect(directionForKey("q")).toBeNull();
     expect(directionForKey("ArrowUp")).toBeNull();
+  });
+});
+
+describe("isInteractKey", () => {
+  it("matches E in either case", () => {
+    expect(isInteractKey("e")).toBe(true);
+    expect(isInteractKey("E")).toBe(true);
+  });
+
+  it("does not match the movement keys", () => {
+    expect(isInteractKey("w")).toBe(false);
   });
 });
 
@@ -60,5 +71,29 @@ describe("attachInput", () => {
     target.dispatchEvent(new KeyboardEvent("keydown", { key: "d" }));
 
     expect(connection.sent).toHaveLength(0);
+  });
+
+  it("sends an InteractEvent on E", () => {
+    const connection = fakeConnection();
+    const target = new EventTarget();
+    attachInput(connection, target);
+
+    target.dispatchEvent(new KeyboardEvent("keydown", { key: "e" }));
+
+    expect(decodeClientInput(connection.sent[0]!.buffer)).toEqual([{ kind: "interact" }]);
+  });
+
+  // Movement rides OS key-repeat on purpose; interact must not, or holding E fires one
+  // interact per repeat tick.
+  it("ignores repeats for interact but not for movement", () => {
+    const connection = fakeConnection();
+    const target = new EventTarget();
+    attachInput(connection, target);
+
+    target.dispatchEvent(new KeyboardEvent("keydown", { key: "e", repeat: true }));
+    expect(connection.sent).toHaveLength(0);
+
+    target.dispatchEvent(new KeyboardEvent("keydown", { key: "w", repeat: true }));
+    expect(connection.sent).toHaveLength(1);
   });
 });

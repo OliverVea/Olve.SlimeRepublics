@@ -14,6 +14,7 @@ import {
   ClientEvent,
   ClientInput,
   type Direction,
+  InteractEvent,
   MoveEvent,
   PingEvent,
   PongEvent,
@@ -26,6 +27,9 @@ export interface Slime {
   id: number;
   x: number;
   y: number;
+  /** Which way it is facing. Ordinal 0 (None) is the wire default, so an absent field reads
+   *  as None — a slime whose heading the server never set, not a slime facing nowhere. */
+  heading: Direction;
 }
 
 export interface WorldSnapshot {
@@ -50,7 +54,12 @@ function readWorldState(state: WorldState): WorldSnapshot {
     const slime = state.slimes(i);
     const position = slime?.position();
     if (!slime || !position) continue;
-    slimes.push({ id: slime.id(), x: position.x(), y: position.y() });
+    slimes.push({
+      id: slime.id(),
+      x: position.x(),
+      y: position.y(),
+      heading: slime.heading(),
+    });
   }
   return { slimes };
 }
@@ -91,6 +100,7 @@ export function decodeServerMessage(data: ArrayBuffer): ServerFrame {
 
 export type OutgoingEvent =
   | { kind: "move"; direction: Direction }
+  | { kind: "interact" }
   | { kind: "ping"; originTime: number }
   | { kind: "pong"; originTime: number };
 
@@ -115,6 +125,11 @@ export function encodeClientInput(events: OutgoingEvent[]): Uint8Array<ArrayBuff
       case "move":
         types.push(ClientEvent.MoveEvent);
         offsets.push(MoveEvent.createMoveEvent(builder, event.direction));
+        break;
+      // InteractEvent is an empty table: the tag is the whole message.
+      case "interact":
+        types.push(ClientEvent.InteractEvent);
+        offsets.push(InteractEvent.createInteractEvent(builder));
         break;
       case "ping":
         types.push(ClientEvent.PingEvent);
@@ -152,6 +167,10 @@ export function decodeClientInput(data: ArrayBufferLike): OutgoingEvent[] {
         if (move) events.push({ kind: "move", direction: move.direction() });
         break;
       }
+      // No fields to read, so unlike the others there is nothing to null-guard.
+      case ClientEvent.InteractEvent:
+        events.push({ kind: "interact" });
+        break;
       case ClientEvent.PingEvent: {
         const ping = input.events(i, new PingEvent()) as PingEvent | null;
         if (ping) events.push({ kind: "ping", originTime: ping.originTime() });

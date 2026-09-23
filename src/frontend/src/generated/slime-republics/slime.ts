@@ -5,6 +5,7 @@
 
 import * as flatbuffers from 'flatbuffers';
 
+import { Direction } from '../slime-republics/direction.js';
 import { Vec2 } from '../slime-republics/vec2.js';
 
 
@@ -36,8 +37,13 @@ position(obj?:Vec2):Vec2|null {
   return offset ? (obj || new Vec2()).__init(this.bb_pos + offset, this.bb!) : null;
 }
 
+heading():Direction {
+  const offset = this.bb!.__offset(this.bb_pos, 8);
+  return offset ? this.bb!.readInt8(this.bb_pos + offset) : Direction.None;
+}
+
 static startSlime(builder:flatbuffers.Builder) {
-  builder.startObject(2);
+  builder.startObject(3);
 }
 
 static addId(builder:flatbuffers.Builder, id:number) {
@@ -46,6 +52,10 @@ static addId(builder:flatbuffers.Builder, id:number) {
 
 static addPosition(builder:flatbuffers.Builder, positionOffset:flatbuffers.Offset) {
   builder.addFieldStruct(1, positionOffset, 0);
+}
+
+static addHeading(builder:flatbuffers.Builder, heading:Direction) {
+  builder.addFieldInt8(2, heading, Direction.None);
 }
 
 static endSlime(builder:flatbuffers.Builder):flatbuffers.Offset {

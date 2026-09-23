@@ -28,7 +28,7 @@ static getSizePrefixedRootAsMoveEvent(bb:flatbuffers.ByteBuffer, obj?:MoveEvent)
 
 direction():Direction {
   const offset = this.bb!.__offset(this.bb_pos, 4);
-  return offset ? this.bb!.readInt8(this.bb_pos + offset) : Direction.Up;
+  return offset ? this.bb!.readInt8(this.bb_pos + offset) : Direction.None;
 }
 
 static startMoveEvent(builder:flatbuffers.Builder) {
@@ -36,7 +36,7 @@ static startMoveEvent(builder:flatbuffers.Builder) {
 }
 
 static addDirection(builder:flatbuffers.Builder, direction:Direction) {
-  builder.addFieldInt8(0, direction, Direction.Up);
+  builder.addFieldInt8(0, direction, Direction.None);
 }
 
 static endMoveEvent(builder:flatbuffers.Builder):flatbuffers.Offset {

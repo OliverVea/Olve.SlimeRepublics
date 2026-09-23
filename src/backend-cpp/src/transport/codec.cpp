@@ -34,7 +34,7 @@ std::string Codec::Encode(const GameManager &game_manager) const {
     for (auto &&[id, pose]: game_manager.GetSlimesWithPoses()) {
         const SlimeRepublics::Vec2 vec(pose.position.x, pose.position.y);
         const SlimeRepublics::Direction heading = ToWire(pose.heading);
-        v.push_back(SlimeRepublics::CreateSlime(builder, id, &vec, heading));
+        v.push_back(SlimeRepublics::CreateSlime(builder, (uint32_t)id, &vec, heading));
     }
 
     const auto svo = builder.CreateVector(v);

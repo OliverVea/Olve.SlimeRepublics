@@ -10,12 +10,25 @@
 // outside that window is simply not drawn. With 20 tiles there is no exact center tile, so
 // the window is [-10, 9] and the origin tile (0,0) is marked.
 
+import { Direction } from "../generated/slime-republics.js";
 import { colorForId, labelColorOn } from "./palette.js";
 import type { Slime, WorldSnapshot } from "./protocol.js";
 
 const TILE_MIN = -10;
 const TILE_COUNT = 20;
 const TILE_MAX = TILE_MIN + TILE_COUNT - 1;
+
+// Canvas deltas, NOT simulation deltas. toPixel flips y so +y is up in the world, which
+// means Direction.Up is negative canvas y — writing this table in world coordinates and
+// flipping it later is how the arrow ends up pointing the wrong way. Direction.None is
+// absent on purpose: it is the wire default, so an unset heading draws no arrow rather than
+// a confident one.
+const HEADING_DELTAS: Partial<Record<Direction, readonly [number, number]>> = {
+  [Direction.Up]: [0, -1],
+  [Direction.Down]: [0, 1],
+  [Direction.Left]: [-1, 0],
+  [Direction.Right]: [1, 0],
+};
 
 const COLORS = {
   background: "#12141a",
@@ -122,6 +135,11 @@ export class TileMapRenderer {
     const cy = py + tile / 2;
 
     const fill = colorForId(slime.id);
+
+    // Before the body, so the circle covers the arrow's base and it reads as attached
+    // rather than as a separate floating mark.
+    this.drawHeading(slime, cx, cy, tile, fill);
+
     ctx.fillStyle = fill;
     ctx.strokeStyle = COLORS.slimeEdge;
     ctx.lineWidth = 2;
@@ -135,6 +153,39 @@ export class TileMapRenderer {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(String(slime.id), cx, cy);
+  }
+
+  /** A small triangle on the circle's edge showing which way the slime faces. Skipped for
+   *  Direction.None and for anything a newer server adds, so an unknown heading is simply
+   *  not drawn. Not applied to the offscreen marker: that view is already degraded and an
+   *  arrow on it is noise. */
+  private drawHeading(slime: Slime, cx: number, cy: number, tile: number, fill: string): void {
+    const delta = HEADING_DELTAS[slime.heading];
+    if (!delta) return;
+
+    const [dx, dy] = delta;
+    const ctx = this.context;
+
+    // The body has radius 0.36 tile: the base sits just inside it, the tip just outside.
+    const tipX = cx + dx * tile * 0.5;
+    const tipY = cy + dy * tile * 0.5;
+    const baseX = cx + dx * tile * 0.3;
+    const baseY = cy + dy * tile * 0.3;
+    // Perpendicular to the heading, giving the base its width.
+    const spreadX = -dy * tile * 0.13;
+    const spreadY = dx * tile * 0.13;
+
+    ctx.beginPath();
+    ctx.moveTo(tipX, tipY);
+    ctx.lineTo(baseX + spreadX, baseY + spreadY);
+    ctx.lineTo(baseX - spreadX, baseY - spreadY);
+    ctx.closePath();
+
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = COLORS.slimeEdge;
+    ctx.lineWidth = 1.5;
+    ctx.fill();
+    ctx.stroke();
   }
 
   /** A hollow mark on the edge tile nearest an off-window slime, plus its distance out. */

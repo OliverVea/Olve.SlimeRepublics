@@ -6,6 +6,7 @@
 export { ClientEvent } from './slime-republics/client-event.js';
 export { ClientInput } from './slime-republics/client-input.js';
 export { Direction } from './slime-republics/direction.js';
+export { InteractEvent } from './slime-republics/interact-event.js';
 export { MoveEvent } from './slime-republics/move-event.js';
 export { PingEvent } from './slime-republics/ping-event.js';
 export { PongEvent } from './slime-republics/pong-event.js';

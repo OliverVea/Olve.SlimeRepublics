@@ -89,6 +89,8 @@ static startEventsVector(builder:flatbuffers.Builder, numElems:number) {
 
 static endClientInput(builder:flatbuffers.Builder):flatbuffers.Offset {
   const offset = builder.endObject();
+  builder.requiredField(offset, 4) // events_type
+  builder.requiredField(offset, 6) // events
   return offset;
 }
 

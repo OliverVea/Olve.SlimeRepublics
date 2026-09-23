@@ -9,7 +9,6 @@
 #include <string>
 #include <string_view>
 
-using SlimeId = std::uint32_t;
 
 template <class T>
 struct StringFormatter : std::formatter<std::string_view> {
@@ -17,6 +16,16 @@ struct StringFormatter : std::formatter<std::string_view> {
         return std::formatter<std::string_view>::format(to_string(v), ctx);
     }
 };
+
+
+enum class SlimeId : std::uint32_t {};
+
+inline std::string to_string(const SlimeId slime_id) {
+    return std::format("slime({})", (long)slime_id);
+}
+
+template <> struct std::formatter<SlimeId> : StringFormatter<SlimeId> {};
+
 
 // -------------
 // --  Vec2i  --

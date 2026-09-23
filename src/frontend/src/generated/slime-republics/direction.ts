@@ -4,8 +4,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 export enum Direction {
-  Up = 0,
-  Down = 1,
-  Left = 2,
-  Right = 3
+  None = 0,
+  Up = 1,
+  Down = 2,
+  Left = 3,
+  Right = 4
 }

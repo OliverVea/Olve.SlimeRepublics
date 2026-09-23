@@ -12,6 +12,12 @@
       "features": [
         "zlib"
       ]
-    }
+    },
+    "catch2",
+    {
+      "name": "spdlog",
+      "default-features": false
+    },
+    "tomlplusplus"
   ]
 }
