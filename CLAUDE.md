@@ -20,10 +20,12 @@ npm test && npm run lint && npm run build     # tests, Biome, typecheck + bundle
 
 ## Conventions
 
-- **Oliver writes the C++ by hand.** Do not write or rewrite server code unless asked; explain,
-  review and suggest instead. Build files, scripts and the client are fair game.
-- **The schema is the contract.** Every message is defined in `src/schema/*.fbs`. Change the
-  schema first, then regenerate; never hand-edit `src/frontend/src/generated/**`.
+- **No AI hands in the C++ or the schema.** Oliver writes the C++ (`src/backend-cpp/src`,
+  `tests`) and the schema (`src/schema/*.fbs`) by hand. Do not write or rewrite either unless
+  asked; explain, review and suggest instead. Build files, scripts and the client are fair game.
+- **The schema is the contract.** Every message is defined in `src/schema/*.fbs`. A contract
+  change starts with Oliver's schema edit, then regeneration; never hand-edit
+  `src/frontend/src/generated/**`.
 - **`src/game` must not depend on the network.** The `slime_world` target does not link
   uWebSockets, and CMake enforces it. Keep the simulation testable headless.
 - **Socket callbacks never mutate the world.** They enqueue events; the tick applies them.
