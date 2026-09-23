@@ -1,9 +1,9 @@
 {
-  "name": "olve-template-web",
+  "name": "slime-republics-client",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Vanilla Web Components + TypeScript frontend for Olve.SlimeRepublics",
+  "description": "Game client for Slime Republics: TypeScript + FlatBuffers over a WebSocket to the C++ server",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -12,16 +12,9 @@
     "lint": "biome check .",
     "format": "biome check --write .",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "generate-client": "cd .. && dotnet tool run kiota generate -l typescript -d api.json -c OlveSlimeRepublicsClient -o frontend/src/api -n OlveSlimeRepublics --clean-output"
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "@microsoft/kiota-abstractions": "1.0.0-preview.103",
-    "@microsoft/kiota-http-fetchlibrary": "1.0.0-preview.103",
-    "@microsoft/kiota-serialization-form": "1.0.0-preview.103",
-    "@microsoft/kiota-serialization-json": "1.0.0-preview.103",
-    "@microsoft/kiota-serialization-multipart": "1.0.0-preview.103",
-    "@microsoft/kiota-serialization-text": "1.0.0-preview.103",
     "flatbuffers": "^25.9.23"
   },
   "devDependencies": {

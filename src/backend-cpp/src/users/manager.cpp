@@ -32,7 +32,7 @@ void UserManager::Initialize() {
     spdlog::info("Initialized sodium successfully");
 }
 
-std::expected<UserId, UserCreationError> UserManager::CreateUser(const std::string& user_, const std::string& display_name, const std::string& password, bool test_account) const {
+std::expected<UserId, UserCreationError> UserManager::CreateUser(const std::string& email, const std::string& display_name, const std::string& password, bool test_account) const {
     char password_hash_buffer[crypto_pwhash_STRBYTES] {0};
     if (crypto_pwhash_str(password_hash_buffer, password.c_str(), password.size(), ops_limit_, mem_limit_) != sodium_success) {
         spdlog::error("Failed to hash password with length {}", password.size());

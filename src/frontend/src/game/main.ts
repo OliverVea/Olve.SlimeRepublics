@@ -1,5 +1,4 @@
-// Entry point for the game client (its own Vite entry — see game.html and vite.config.ts,
-// so the CRUD bundle carries none of this and vice versa).
+// Entry point for the game client, loaded by index.html.
 
 import { connect, type Status } from "./connection.js";
 import { attachInput } from "./input.js";

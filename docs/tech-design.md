@@ -10,9 +10,22 @@ High-level architecture and the components the system is assembled from. Detail 
 
 ## 1. Architecture
 
-One ASP.NET Core process, one container, one pod. A single Kestrel listener serves two surfaces:
+One C++ process owns one world. It runs a single event loop: uWebSockets polls the sockets, and a
+timer on the same loop advances the simulation at 20 Hz. Browsers connect over a WebSocket and
+exchange FlatBuffers messages defined in one shared schema.
 
-<img src="assets/architecture.svg" alt="Architecture: browser, two request surfaces, one server process holding durable state" width="100%">
+```
+browser (TypeScript client)
+   │  WebSocket, FlatBuffers
+   ▼
+transport  ── decodes frames, enqueues events ──►  event queue
+(uWebSockets)                                          │
+   ▲                                                   ▼
+   └──── broadcasts WorldState each tick ◄──── game (EnTT world, 20 Hz tick)
+```
+
+Socket callbacks never touch the world. They enqueue events, and the tick applies them, so ordering
+belongs to the simulation rather than to packet arrival.
 
 ---
 
@@ -20,18 +33,13 @@ One ASP.NET Core process, one container, one pod. A single Kestrel listener serv
 
 | Component | Where | What it does |
 |---|---|---|
-| **Host & configuration** | `Configuration/HostConfiguration.cs` | Clears default sources and rebuilds the chain: appsettings → env → user-secrets → command line. Binds `Host`/`Port`. |
-| **Authentication** | `Configuration/AuthenticationConfiguration.cs` | JWT bearer against Authentik. Accepts both the API and the SPA client as valid issuer/audience pairs, so one token shape works for both. App-wide fallback policy is `RequireAuthenticatedUser`. |
-| **Auth config endpoint** | `Configuration/FrontendConfigEndpoints.cs` | `GET /api/auth-config` — public OIDC settings served at runtime, not baked into the bundle, because one image deploys to several Authentik environments. |
-| **JSON & OpenAPI** | `Configuration/JsonConfiguration.cs`, `AppJsonContext.cs` | Source-generated serialization (AOT-friendly) via a `JsonSerializerContext`. Every DTO must be registered there. `Id<T>` is projected to a string/uuid in the OpenAPI schema. |
-| **Logging & telemetry** | `Configuration/TelemetryConfiguration.cs`, `OAuth2TokenProvider.cs` | OpenTelemetry for traces, metrics **and logs**, exported over OTLP. Optional OAuth2 client-credentials auth on the exporter. **Entirely opt-in and never fatal** — no `OpenTelemetry:Endpoint` configured means the whole block is skipped and the app runs on console logging alone. |
-| **Health** | `Health/HealthEndpoints.cs` | `GET /health`, anonymous, unconditional 200. Liveness only — deliberately not a readiness or dependency check. |
-| **Persistence** | `Stores/` | `EntityStore<T>` plus an optional `EntityStorePersister<T>`: whole-snapshot, debounced, loaded on startup, flushed on shutdown. Pluggable via the two-method `ISnapshotStore`; ephemeral by default, `FileSnapshotStore` when persistent. Cannot overwrite good state with empty. |
-| **Messages** | `Messages/` | **Template scaffold, not game state.** Exercises the CRUD/validation/persistence path inherited from `Olve.Template.Api`. |
-| **SPA shell** | `frontend/src/` | Vanilla TypeScript, no framework runtime. Vite build, Vitest tests, Biome lint. `api/` is Kiota-generated from `api.json`. |
-| **Game client** | `frontend/` (own entry) | Real-time 3D — polygon style with a stylised shader pass. three.js `WebGPURenderer` (`three/webgpu`), shaders in TSL, which compiles to both WGSL and GLSL so the WebGL2 fallback costs nothing to maintain. Built as a separate Vite entry point so the game bundle carries none of the CRUD/admin UI. |
-| **Build & versioning** | `tools/version.cs`, `Dockerfile` | Version derived from git; the SPA is built and copied into `wwwroot` at image build time. |
-| **Deployment** | `.pipelines/`, `helm/` | GitOps via Olve.Pipelines. ClusterIP-only chart; public routing is registered in Olve.Homelab, not here. |
+| **Game** | `src/backend-cpp/src/game/` | The simulation: an EnTT entity registry, the event queue, and `GameManager::Tick`. Must not reference the network; the `slime_world` CMake target does not link uWebSockets, so a violation is a link error. |
+| **Transport** | `src/backend-cpp/src/transport/` | The codec: encodes the `WorldState` broadcast and pongs, and maps wire enums to game types, rejecting out-of-range values. |
+| **Server entry** | `src/backend-cpp/src/main.cpp` | Wires the uWebSockets app, the tick timer and the codec onto one loop. Every incoming frame goes through the FlatBuffers verifier before it is read. One socket is one slime: spawned on open, despawned on close. |
+| **Users** | `src/backend-cpp/src/users/` | Account login, in progress. Passwords are hashed with libsodium (Argon2); an unknown email is verified against a dummy hash so login timing does not reveal which accounts exist. The user store is still a stub. |
+| **Schema** | `src/schema/` | The API contract. `common.fbs` defines every client and server message. The C++ side is generated at build time; the TypeScript side by `generate.sh`, committed. |
+| **Client** | `src/frontend/` | Vanilla TypeScript, Vite, Vitest, Biome. Connects, decodes `WorldState`, sends input and pings. `tile-map.ts` is a debug renderer; the real renderer (see below) replaces that one file. |
+| **Tests** | `src/backend-cpp/tests/`, `src/frontend/src/**/*.test.ts` | Catch2 on the server; Vitest on the client, including a frame captured off the running server so wire-format drift fails a test. |
 
 ---
 
@@ -41,11 +49,10 @@ The handful of rules that shape everything else:
 
 - **One game server owns one game world.** A *tile* is one slime's space; a *sector* is an n×n
   block of tiles; a *world* is the set of sectors that forms one board. A world lives entirely in
-  one process's memory, so exactly one process may serve it (`replicaCount: 1`, `strategy:
-  Recreate`). A second pod would not share the load — it would run a *second, divergent copy*, and
-  the Service would send some players to one and some to the other with nothing logged and no error
-  raised. Growing past one world means adding game servers, never adding pods to one. The cost of
-  the rule is that every deploy disconnects everyone on that world.
+  one process's memory, so exactly one process may serve it. A second process would not share the load; it would run a
+  *second, divergent copy*, and players would silently split between them. Growing past one world
+  means adding game servers, never replicas of one. The cost of the rule is that every restart
+  disconnects everyone on that world.
 - **We do not own the engine layer.** Scene graph, glTF loading, lights, shadow maps, culling,
   camera, post-processing: three.js's, not ours. This rule exists because `Olve.Trains` grew an
   `Olve.Engine3D` and an asset pipeline of its own, and paid for them in multi-day debugging of
@@ -68,10 +75,3 @@ The handful of rules that shape everything else:
   locked later. Keeping it locked also leaves the pixel passes viable, since rotation is the one
   thing pixel-perfect rendering has no answer for — but that is now a bonus rather than the
   justification.
-- **Telemetry is opt-in and never fatal.** Misconfigured or absent observability must not take the
-  app down.
-- **Durable state is loaded before anything runs and flushed on the way out.** Startup order is
-  `StartAsync` (persister loads) → `RunAsyncOnStartup` (seeders, against populated stores) →
-  `WaitForShutdownAsync`; on shutdown the persister cancels its debounce timer and writes
-  unconditionally, so a clean stop never loses a pending save. Long-running work is a
-  `BackgroundService`, not a startup task.

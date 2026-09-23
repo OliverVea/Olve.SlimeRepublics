@@ -6,15 +6,9 @@ FlatBuffers definitions shared by the C++ server and the TypeScript client.
 ./generate.sh
 ```
 
-writes to:
-
-| Target | Path | Committed |
-|---|---|---|
-| C++ | `src/backend-cpp/generated/` | yes |
-| TypeScript | `src/frontend/src/generated/` | yes |
-
-Generated code is committed for the same reason the Kiota client is: neither
-build should need a code generator installed.
+regenerates the TypeScript types in `src/frontend/src/generated/`, which are committed so the
+client builds without flatc installed. The C++ headers are not generated here: CMake runs the
+vcpkg flatc at build time, so they always match the C++ runtime.
 
 ## Versions must agree
 
@@ -34,5 +28,4 @@ Three artifacts are pinned to **25.9.23** and have to stay in lockstep:
 - The generated TypeScript is prefixed with `// @ts-nocheck` by `generate.sh`.
   flatc emits unused union helpers and type parameters that trip the project's
   `noUnusedLocals`/`noUnusedParameters`. Exported types still reach callers.
-- `src/generated` is excluded from Biome in `src/frontend/biome.json`, matching
-  how `src/api` is handled.
+- `src/generated` is excluded from Biome in `src/frontend/biome.json`.
