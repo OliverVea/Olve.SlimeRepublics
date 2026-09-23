@@ -7,7 +7,7 @@
 # Two images: the C++ game server (Dockerfile at the repo root) and the web image — the client
 # behind nginx, which also proxies /ws to the server (src/frontend/Dockerfile). Beta deploys
 # first and gates prod: if deploy-beta fails (import, rollout, or the WebSocket check through
-# the beta host), deploy never runs.
+# the beta host) or bot-smoke fails (bots playing on beta), deploy never runs.
 #
 # Secrets are declared by NAME only; values live in the pipeline's k8s secret
 # (olve-pipeline-{id}) and are mounted into every job as env vars.
@@ -48,12 +48,18 @@ productionSteps:
       image: node:24-alpine
       scriptFile: scripts/frontend-check.sh
 
-# Processing steps run sequentially, each receiving the bundle. deploy-beta gates deploy.
+# Processing steps run sequentially, each receiving the bundle. Each one gates the next, so
+# prod deploys only once beta is up and bots have played on it.
 processingSteps:
   - name: deploy-beta
     configuration:
       image: alpine:latest
       scriptFile: scripts/deploy-beta.sh
+  # Bots play on beta for a minute (src/frontend/scripts/smoke.ts). The place for RL bots later.
+  - name: bot-smoke
+    configuration:
+      image: node:24-alpine
+      scriptFile: scripts/bot-smoke.sh
   - name: deploy
     configuration:
       image: alpine:latest

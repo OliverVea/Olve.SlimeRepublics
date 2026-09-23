@@ -43,6 +43,8 @@ Olve.Pipelines, config in `.pipelines/`. A push to `main` builds two images and 
   image build, so a failing test fails the build.
 - `src/frontend/Dockerfile` + `nginx.conf`: the client behind nginx, which proxies `/ws` to
   the server. The client is built with `VITE_WS_URL=/ws`.
+- `src/frontend/scripts/smoke.ts` (`npm run smoke`): bots play on beta for a minute; the
+  `bot-smoke` step gates prod on it.
 - `helm/`: both Deployments, their Services and NetworkPolicies. The server stays at one replica
   with `Recreate`; the world is in memory and is lost on every deploy.
 

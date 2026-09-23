@@ -12,7 +12,8 @@
     "lint": "biome check .",
     "format": "biome check --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "smoke": "vite build --ssr scripts/smoke.ts --outDir .smoke --emptyOutDir --logLevel warn && node .smoke/smoke.js"
   },
   "dependencies": {
     "flatbuffers": "^25.9.23"
