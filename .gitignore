@@ -6,3 +6,7 @@
 
 # Local config
 .env
+
+# Olve.Pipelines local work directory (pl dev, olve-build) and SDK install
+.pipelines/.olve/
+.pipelines/node_modules/
