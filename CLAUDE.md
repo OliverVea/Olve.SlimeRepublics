@@ -39,7 +39,7 @@ npm test && npm run lint && npm run build     # tests, Biome, typecheck + bundle
 Olve.Pipelines v2 (pipeline "Olve.SlimeRepublics" on `pipelines-v2-private.ovea.pro`), defined
 in `.pipelines/pipeline.ts`. A push to `main` builds two images and deploys beta
 (`slimes-beta.ovea.pro`, Tailscale) then prod (`slimes.ovea.pro`, Cloudflare tunnel), with no
-manual step: source → web-source → build-server ∥ build-web ∥ test → deploy-beta → beta-test →
+manual step: source → build-server ∥ build-web ∥ test → deploy-beta → beta-test →
 deploy-prod → prod-test. `pl dev describe` prints it; `pl run get "Olve.SlimeRepublics#<n>"`
 shows a run.
 
