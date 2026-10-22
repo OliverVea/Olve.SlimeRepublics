@@ -1,20 +1,11 @@
-import type { Ctx } from "@olve/pipelines";
+import { checkSpa, type Ctx } from "@olivervea/pipelines";
 
 export const BETA = "https://slimes-beta.ovea.pro";
 export const PROD = "https://slimes.ovea.pro";
 
-function check(ok: boolean, what: string): asserts ok {
-  if (!ok) throw new Error(what);
-}
-
 export async function checkClient(ctx: Ctx, origin: string) {
-  const html = await (await ctx.http.expectOk(`${origin}/`)).text();
-  check(html.includes("<title>Slime Republics</title>"), `${origin}/ is not the game client`);
-  const bundle = html.match(/src="(\/assets\/[^"]+\.js)"/)?.[1];
-  check(bundle !== undefined, `${origin}/ does not reference the client bundle`);
-  const js = await ctx.http.expectOk(`${origin}${bundle}`);
-  check(js.headers.get("content-type")?.includes("javascript") ?? false, `${bundle} is not served as JavaScript`);
-  ctx.log("client served", { origin, bundle });
+  const { html } = await checkSpa(ctx, origin);
+  if (!html.includes("<title>Slime Republics</title>")) throw new Error(`${origin}/ is not the game client`);
 }
 
 // One socket the way the page opens it (nginx refuses any other Origin); resolves with the first server message's size.

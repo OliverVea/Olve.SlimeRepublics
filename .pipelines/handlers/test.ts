@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { implement } from "@olve/pipelines";
+import { implement } from "@olivervea/pipelines";
 import { test } from "../pipeline";
 
 export default implement(test, async ({ source }, ctx) => {

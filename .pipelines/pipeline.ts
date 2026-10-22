@@ -1,5 +1,5 @@
 // Every push goes beta, then prod. config.yaml beside it is the paused v1 deployer's rollback path.
-import { BuiltImage, HelmRelease, pipeline, secret, Source, step, steps } from "@olve/pipelines";
+import { HelmRelease, pipeline, secret, Source, step, steps } from "@olivervea/pipelines";
 import * as M from "./models";
 
 export const GITHUB_TOKEN = secret("GITHUB_TOKEN", "GitHub read token used to fetch the repo tarball.");
@@ -9,15 +9,6 @@ export const source = steps.gitHubSource({
   name: "source",
   description: "Fetches the pushed commit from GitHub.",
   token: GITHUB_TOKEN,
-});
-
-export const webSource = step({
-  name: "web-source",
-  description: "Cuts src/frontend out of the source tree: the web image's build context.",
-  image: "alpine:3.22",
-  input: { source: Source },
-  output: Source,
-  timeoutSeconds: 120,
 });
 
 export const buildServer = steps.imageBuild({
@@ -32,6 +23,7 @@ export const buildWeb = steps.imageBuild({
   name: "build-web",
   description: "Builds the web image (the client behind nginx, which proxies /ws to the server) with kaniko.",
   repository: "olve-slimerepublics-web",
+  context: "src/frontend",
   timeoutSeconds: 1200,
 });
 
@@ -43,16 +35,23 @@ export const test = step({
   timeoutSeconds: 900,
 });
 
-const deployInput = { source: Source, server: BuiltImage, web: BuiltImage };
+const RELEASE = "olve-slimerepublics";
 
-export const deployBeta = step({
+const deployTo = (namespace: string) => ({
+  host: "oliver@bulwark-m2",
+  sshKey: SSH_PRIVATE_KEY,
+  release: RELEASE,
+  namespace,
+  chart: "helm",
+  images: { server: "image", web: "web.image" },
+  deployments: [`${RELEASE}-server`, `${RELEASE}-web`],
+  timeoutSeconds: 900,
+});
+
+export const deployBeta = steps.helmDeployOverSsh({
   name: "deploy-beta",
   description: "Imports both images on the node and deploys them to apps-beta with Helm.",
-  image: "alpine:3.22",
-  input: deployInput,
-  output: HelmRelease,
-  secrets: [SSH_PRIVATE_KEY],
-  timeoutSeconds: 900,
+  ...deployTo("apps-beta"),
 });
 
 export const betaTest = step({
@@ -63,14 +62,10 @@ export const betaTest = step({
   timeoutSeconds: 600,
 });
 
-export const deployProd = step({
+export const deployProd = steps.helmDeployOverSsh({
   name: "deploy-prod",
   description: "Imports both images on the node and deploys them to apps with Helm.",
-  image: "alpine:3.22",
-  input: deployInput,
-  output: HelmRelease,
-  secrets: [SSH_PRIVATE_KEY],
-  timeoutSeconds: 900,
+  ...deployTo("apps"),
 });
 
 export const prodTest = step({
@@ -88,14 +83,9 @@ export default pipeline({
 })
   .onPush(e => ({ repo: e.repository.full_name, sha: e.after, deployTo: "prod" }))
   .stage([source, from => ({ repo: from.input.repo, sha: from.input.sha })])
-  .stage([webSource, from => ({ source: from.source })])
-  .stage(
-    [buildServer, from => ({ source: from.source })],
-    [buildWeb, from => ({ source: from["web-source"] })],
-    [test, from => ({ source: from.source })],
-  )
+  .stage(buildServer, buildWeb, test)
   .stage([deployBeta, from => ({ source: from.source, server: from["build-server"], web: from["build-web"] })])
-  .stage([betaTest, from => ({ source: from.source, release: from["deploy-beta"] })])
+  .stage(betaTest)
   .when({ deployTo: "prod" }, p => p
     .stage([deployProd, from => ({ source: from.source, server: from["build-server"], web: from["build-web"] })])
     .stage([prodTest, from => ({ release: from["deploy-prod"] })]));

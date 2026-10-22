@@ -1,4 +1,4 @@
-import { model, z } from "@olve/pipelines";
+import { model, z } from "@olivervea/pipelines";
 
 export const DeployRequest = model("DeployRequest", z.object({
   repo: z.string().default("OliverVea/Olve.SlimeRepublics"),

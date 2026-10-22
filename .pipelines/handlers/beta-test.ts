@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { implement } from "@olve/pipelines";
+import { implement } from "@olivervea/pipelines";
 import { betaTest } from "../pipeline";
 import { BETA, checkClient, firstMessage } from "./lib/checks";
 
