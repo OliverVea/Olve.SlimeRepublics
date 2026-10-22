@@ -1,4 +1,4 @@
-# Game server image. Built by .pipelines/scripts/build-server.sh (Kaniko), context = repo root.
+# Game server image. Built by the pipeline's build-server step (kaniko), context = repo root.
 #
 # Debian trixie: its g++ 14 has std::ranges::to, and the runtime stage must carry a libstdc++
 # at least as new as the one we compiled against — trixie-slim does, bookworm/distroless-12
@@ -35,7 +35,7 @@ COPY src/backend src/backend
 
 # One RUN for configure + build + test: Kaniko snapshots every layer, so splitting them would
 # snapshot the whole build tree more than once. A failing test fails the image build, which
-# fails the pipeline's production group, so nothing deploys.
+# fails the run, so nothing deploys.
 #
 # - x64-linux-release: build the dependencies release-only (the default triplet builds each
 #   twice, debug and release).

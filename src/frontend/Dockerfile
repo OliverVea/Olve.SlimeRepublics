@@ -1,5 +1,5 @@
 # Web image: the built client behind nginx, which also proxies /ws to the game server so the
-# page and its socket share one origin. Built by .pipelines/scripts/build-web.sh (Kaniko),
+# page and its socket share one origin. Built by the pipeline's build-web step (kaniko),
 # context = src/frontend. The generated FlatBuffers client is committed, so no flatc here.
 FROM node:24-alpine AS build
 WORKDIR /fe

@@ -1,5 +1,5 @@
 // Gameplay smoke test: a few bots join a deployed server, hop around, and check the game
-// actually works end to end. Run by the pipeline's bot-smoke step against beta before prod;
+// actually works end to end. Run by the pipeline's beta-test step against beta before prod;
 // `npm run smoke` runs it locally (SMOKE_URL / SMOKE_ORIGIN point it elsewhere).
 //
 // Passes only if every bot:

@@ -36,16 +36,24 @@ npm test && npm run lint && npm run build     # tests, Biome, typecheck + bundle
 
 ## Deploy
 
-Olve.Pipelines, config in `.pipelines/`. A push to `main` builds two images and deploys beta
-(`slimes-beta.ovea.pro`, Tailscale) then prod (`slimes.ovea.pro`, Cloudflare tunnel):
+Olve.Pipelines v2 (pipeline "Olve.SlimeRepublics" on `pipelines-v2-private.ovea.pro`), defined
+in `.pipelines/pipeline.ts`. A push to `main` builds two images and deploys beta
+(`slimes-beta.ovea.pro`, Tailscale) then prod (`slimes.ovea.pro`, Cloudflare tunnel), with no
+manual step: source → web-source → build-server ∥ build-web ∥ test → deploy-beta → beta-test →
+deploy-prod → prod-test. `pl dev describe` prints it; `pl run get "Olve.SlimeRepublics#<n>"`
+shows a run.
 
 - `Dockerfile` (repo root): the game server on Debian trixie. The Catch2 suite runs inside the
   image build, so a failing test fails the build.
 - `src/frontend/Dockerfile` + `nginx.conf`: the client behind nginx, which proxies `/ws` to
-  the server. The client is built with `VITE_WS_URL=/ws`.
-- `src/frontend/scripts/smoke.ts` (`npm run smoke`): bots play on beta for a minute; the
-  `bot-smoke` step gates prod on it.
+  the server. The client is built with `VITE_WS_URL=/ws`. `test` runs Biome, Vitest and the
+  typecheck + build.
+- `beta-test` opens a socket and checks the client through the beta host, then bots play on
+  beta for a minute (`src/frontend/scripts/smoke.ts`, `npm run smoke`). A failure stops prod.
+- `prod-test` is read-only: the client and its bundle, and one short-lived socket.
 - `helm/`: both Deployments, their Services and NetworkPolicies. The server stays at one replica
-  with `Recreate`; the world is in memory and is lost on every deploy.
+  with `Recreate`; the world is in memory and is lost on every deploy. The web pod admits only
+  Traefik, so the tests go through the hostnames.
 
-The hostnames are routed in the Olve.Homelab edge chart, not here.
+The hostnames are routed in the Olve.Homelab edge chart, not here. `.pipelines/config.yaml` is
+the old v1 pipeline, kept paused (its deploy steps are blocked) as a rollback path.
