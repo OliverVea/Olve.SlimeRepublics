@@ -55,5 +55,4 @@ shows a run.
   with `Recreate`; the world is in memory and is lost on every deploy. The web pod admits only
   Traefik, so the tests go through the hostnames.
 
-The hostnames are routed in the Olve.Homelab edge chart, not here. `.pipelines/config.yaml` is
-the old v1 pipeline, kept paused (its deploy steps are blocked) as a rollback path.
+The hostnames are routed in the Olve.Homelab edge chart, not here.
