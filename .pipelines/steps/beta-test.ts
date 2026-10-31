@@ -1,10 +1,15 @@
 import { join } from "node:path";
-import { implement } from "@olivervea/pipelines";
-import { betaTest } from "../pipeline";
-import { BETA, checkClient, firstMessage } from "./lib/checks";
+import { implement, step, HelmRelease, Source } from "@olivervea/pipelines";
+import { BETA, checkClient, firstMessage } from "../lib/checks";
 
 // Bots join the world for a minute, so this runs against beta only.
-export default implement(betaTest, async ({ source, release }, ctx) => {
+export const betaTest = implement(step({
+  name: "beta-test",
+  description: "Checks the client and a WebSocket through slimes-beta.ovea.pro, then bots play on beta for a minute (`npm run smoke`).",
+  image: "node:24-alpine",
+  input: { source: Source, release: HelmRelease },
+  timeoutSeconds: 600,
+}), async ({ source, release }, ctx) => {
   await ctx.retry({ attempts: 6, delaySeconds: 5 }, () => firstMessage(ctx, BETA));
   await checkClient(ctx, BETA);
   const cwd = join(await ctx.files.fetch(source.tree), "src/frontend");

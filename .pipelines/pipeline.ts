@@ -1,38 +1,33 @@
 // Every push goes beta, then prod.
-import { HelmRelease, pipeline, secret, Source, step, steps } from "@olivervea/pipelines";
+import { pipeline, steps } from "@olivervea/pipelines";
 import * as M from "./models";
+import { GITHUB_TOKEN, REGISTRY_MAP, SSH_PRIVATE_KEY } from "./shared";
+import { betaTest } from "./steps/beta-test";
+import { prodTest } from "./steps/prod-test";
+import { test } from "./steps/test";
 
-export const GITHUB_TOKEN = secret("GITHUB_TOKEN", "GitHub read token used to fetch the repo tarball.");
-export const SSH_PRIVATE_KEY = secret("SSH_PRIVATE_KEY", "SSH key for importing the images and running helm on the homelab host.");
-
-export const source = steps.gitHubSource({
+const source = steps.gitHubSource({
   name: "source",
   description: "Fetches the pushed commit from GitHub.",
   token: GITHUB_TOKEN,
 });
 
-export const buildServer = steps.imageBuild({
+const buildServer = steps.imageBuild({
   name: "build-server",
   description: "Builds the game server image with kaniko; the Catch2 suite runs inside the build.",
   repository: "olve-slimerepublics",
   stallTimeoutSeconds: 600,
+  registryMap: REGISTRY_MAP,
   timeoutSeconds: 3600,
 });
 
-export const buildWeb = steps.imageBuild({
+const buildWeb = steps.imageBuild({
   name: "build-web",
   description: "Builds the web image (the client behind nginx, which proxies /ws to the server) with kaniko.",
   repository: "olve-slimerepublics-web",
   context: "src/frontend",
+  registryMap: REGISTRY_MAP,
   timeoutSeconds: 1200,
-});
-
-export const test = step({
-  name: "test",
-  description: "Frontend checks: Biome, the Vitest suite, typecheck and production build.",
-  image: "node:24-alpine",
-  input: { source: Source },
-  timeoutSeconds: 900,
 });
 
 const RELEASE = "olve-slimerepublics";
@@ -48,32 +43,16 @@ const deployTo = (namespace: string) => ({
   timeoutSeconds: 900,
 });
 
-export const deployBeta = steps.helmDeployOverSsh({
+const deployBeta = steps.helmDeployOverSsh({
   name: "deploy-beta",
   description: "Imports both images on the node and deploys them to apps-beta with Helm.",
   ...deployTo("apps-beta"),
 });
 
-export const betaTest = step({
-  name: "beta-test",
-  description: "Checks the client and a WebSocket through slimes-beta.ovea.pro, then bots play on beta for a minute (`npm run smoke`).",
-  image: "node:24-alpine",
-  input: { source: Source, release: HelmRelease },
-  timeoutSeconds: 600,
-});
-
-export const deployProd = steps.helmDeployOverSsh({
+const deployProd = steps.helmDeployOverSsh({
   name: "deploy-prod",
   description: "Imports both images on the node and deploys them to apps with Helm.",
   ...deployTo("apps"),
-});
-
-export const prodTest = step({
-  name: "prod-test",
-  description: "Read-only check of slimes.ovea.pro: the client is served and one WebSocket gets a message from the server.",
-  image: "alpine:3.22",
-  input: { release: HelmRelease },
-  timeoutSeconds: 180,
 });
 
 export default pipeline({
