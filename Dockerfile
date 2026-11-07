@@ -30,6 +30,12 @@ RUN baseline=$(grep -o '"builtin-baseline": *"[0-9a-f]*"' src/backend/vcpkg.json
  && git -C "$VCPKG_ROOT" checkout -q "$baseline" \
  && "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
 
+# The dependencies in a layer of their own, so the layer cache rebuilds them only when vcpkg.json
+# changes. The release preset's configure below finds them installed (same triplet, same path).
+RUN "$VCPKG_ROOT/vcpkg" install --x-manifest-root=src/backend \
+      --x-install-root=src/backend/build/vcpkg_installed \
+      --triplet=x64-linux-release --clean-after-build
+
 COPY src/schema src/schema
 COPY src/backend src/backend
 

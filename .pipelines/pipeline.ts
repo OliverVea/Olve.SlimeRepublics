@@ -16,6 +16,7 @@ const buildServer = steps.imageBuild({
   name: "build-server",
   description: "Builds the game server image with kaniko; the Catch2 suite runs inside the build.",
   repository: "olve-slimerepublics",
+  cacheRepo: "registry.ovea.pro/olve-slimerepublics/cache",
   stallTimeoutSeconds: 600,
   registryMap: REGISTRY_MAP,
   timeoutSeconds: 3600,
@@ -26,6 +27,7 @@ const buildWeb = steps.imageBuild({
   description: "Builds the web image (the client behind nginx, which proxies /ws to the server) with kaniko.",
   repository: "olve-slimerepublics-web",
   context: "src/frontend",
+  cacheRepo: "registry.ovea.pro/olve-slimerepublics-web/cache",
   registryMap: REGISTRY_MAP,
   timeoutSeconds: 1200,
 });
