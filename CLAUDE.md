@@ -34,6 +34,12 @@ npm test && npm run lint && npm run build     # tests, Biome, typecheck + bundle
 - flatc, the C++ flatbuffers headers and the `flatbuffers` npm package are pinned to the same
   version. See `src/schema/README.md` before bumping any of them.
 
+## Publishing
+
+- Agents land their own changes without review. GitHub requires a PR on `main`: open one, and once the
+  client checks (`npm test && npm run lint && npm run build`) pass, plus `ctest` when the change touches the
+  server build, merge it yourself (squash).
+
 ## Deploy
 
 Olve.Pipelines v2 (pipeline "Olve.SlimeRepublics" on `pipelines-v2-private.ovea.pro`), defined
